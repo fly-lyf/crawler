@@ -20,7 +20,7 @@ public class ExcelReader {
     public SearchResult[] reader() throws Exception {
         //cnki的读取
         //新建workbook
-        InputStream instream = new FileInputStream("F:\\资料\\source-init-cnki.xls");
+        InputStream instream = new FileInputStream("H:\\资料\\source-init.xls");
         Workbook readwb = Workbook.getWorkbook(instream);
         //读表
         Sheet sheet = readwb.getSheet(0);
