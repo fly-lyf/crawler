@@ -53,12 +53,19 @@ public class DoubanSpider {
             if (titleNode.select("span").size() > 0) {
                 title += titleNode.select("span").get(0).text().trim();
             }
+            //去空格
             while(title.indexOf(" ") != -1){
                 title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ")+1, title.length());
             }
+            //截取冒号，破折号之前的书名
+            if(title.indexOf(":") != -1){
+                title = title.substring(0, title.indexOf(":"));
+            }else if(title.indexOf("—") != -1){
+                title = title.substring(0, title.indexOf("—"));
+            }
             // 匹配到书名之后，开始匹配作者，出版社，时间
             // 处理中英文标点
-            if(title.equals( searchResult.getTitle())){
+            if(title.contains(searchResult.getTitle())){
                 Element otherInfo = titleNode.parent().nextElementSibling();
                 String[] infos = otherInfo.text().trim().split(" / ");
                 String author = infos[0];
