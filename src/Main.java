@@ -15,33 +15,33 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         //cnki 总被引，自引，机构自引，论文类型，不能处理分年度的被引数据
-//        ExcelReader reader = new ExcelReader();
-//        SearchResult[] searchResults = reader.reader();
-//        for(int i=0;i<searchResults.length;i++) {
-//            CnkiSpider cnki = new CnkiSpider();
-//            CnkiResult cnkiResult;
-//            CnkiResult cnkiResult1;
-//            CnkiResult citation;
-//            cnki.getSessionId();
-//            //无出版年
-////            String url = cnki.searchKeyword(searchResults[i],0);
-////            cnkiResult = cnki.getCitations(searchResults[i]);
-////            cnkiResult = cnki.getHtml(url);
-////            citation = cnki.getSelfCitation(cnkiResult, searchResults[i]);
-////            cnkiResult.setSelfCitation(citation.getSelfCitation());
-////            cnkiResult.setSelfAddCitation(citation.getSelfAddCitation());
-//            //有出版年
-//            String url1 = cnki.searchKeyword(searchResults[i],1);
-////            cnkiResult1 = cnki.getCitations(searchResults[i]);
-//            cnkiResult1 = cnki.getHtml(url1);
-//            citation = cnki.getSelfCitation(cnkiResult1, searchResults[i]);
-//            cnkiResult1.setSelfCitation(citation.getSelfCitation());
-//            cnkiResult1.setSelfAddCitation(citation.getSelfAddCitation());
-//            //要加参数写入
-////            reader.writeCNKI(cnkiResult,searchResults[i],0);
-//            reader.writeCNKI(cnkiResult1,searchResults[i],1);
-//            Thread.sleep(6000);
-//        }
+        ExcelReader reader = new ExcelReader();
+        SearchResult[] searchResults = reader.reader();
+        for(int i=0;i<searchResults.length;i++) {
+            CnkiSpider cnki = new CnkiSpider();
+            CnkiResult cnkiResult;
+            CnkiResult cnkiResult1;
+            CnkiResult citation;
+            cnki.getSessionId();
+            //无出版年
+//            String url = cnki.searchKeyword(searchResults[i],0);
+//            cnkiResult = cnki.getCitations(searchResults[i]);
+//            cnkiResult = cnki.getHtml(url);
+//            citation = cnki.getSelfCitation(cnkiResult, searchResults[i]);
+//            cnkiResult.setSelfCitation(citation.getSelfCitation());
+//            cnkiResult.setSelfAddCitation(citation.getSelfAddCitation());
+            //有出版年
+            String url1 = cnki.searchKeyword(searchResults[i],1);
+            cnkiResult1 = cnki.getHtml(url1);
+            System.out.println(cnkiResult1);
+            citation = cnki.getSelfCitation(cnkiResult1, searchResults[i]);
+            cnkiResult1.setSelfCitation(citation.getSelfCitation());
+            cnkiResult1.setSelfAddCitation(citation.getSelfAddCitation());
+            //要加参数写入
+//            reader.writeCNKI(cnkiResult,searchResults[i],0);
+            reader.writeCNKI(cnkiResult1,searchResults[i],1);
+            Thread.sleep(6000);
+        }
 
 //         cnki webdriver 分年度获取被引数量
 //        ExcelReader reader = new ExcelReader();
@@ -57,15 +57,15 @@ public class Main {
 //        }
 
         //豆瓣
-        ExcelReader reader = new ExcelReader();
-        pojo.SearchResult[] searchResults = reader.reader();
-        Double[] results = null;
-        for(int i=0;i<searchResults.length;i++) {
-            DoubanSpider douban = new DoubanSpider();
-            results = douban.requestDouban(searchResults[i]);
-            reader.writeDouBan(results);
-            Thread.sleep(5000);
-        }
+//        ExcelReader reader = new ExcelReader();
+//        pojo.SearchResult[] searchResults = reader.reader();
+//        Double[] results = null;
+//        for(int i=0;i<searchResults.length;i++) {
+//            DoubanSpider douban = new DoubanSpider();
+//            results = douban.requestDouban(searchResults[i]);
+//            reader.writeDouBan(results);
+//            Thread.sleep(5000);
+//        }
 
 
         //当当
