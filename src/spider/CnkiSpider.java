@@ -30,6 +30,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import pojo.CnkiResult;
 import pojo.SearchResult;
+import sun.security.util.Length;
 
 
 /**
@@ -50,11 +51,13 @@ public class CnkiSpider {
         HttpResponse response = null;
         String url = "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB";
         HttpGet httpGet = new HttpGet(url);
-        cookieStr = "RsPerPage=20; c_m_LinID=LinID=WEEvREcwSlJHSldTTGJhYlRBekdvdWJCWVVIRU9GaTF2YU5nMmZxN2RGZzFPenhDU3ZNdEFhNmkxSkJJTndCRFRIRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!&ot=08/31/2015 11:03:40";
+//        cookieStr = "RsPerPage=20; c_m_LinID=LinID=WEEvREcwSlJHSldTTGJhYlRBekdvdWJCWVVIRU9GaTF2YU5nMmZxN2RGZzFPenhDU3ZNdEFhNmkxSkJJTndCRFRIRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!&ot=09/07/2016 11:03:40";
+      cookieStr="RsPerPage=20; Ecp_ClientId=4160903165400657046; LID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!; c_m_LinID=LinID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!&ot=09/07/2016 17:46:20; c_m_expire=2016-09-07 17:46:20";
         httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
         httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
         httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
         httpGet.setHeader("Cookie", cookieStr);
+
         response = httpClient.execute(httpGet);
         List<Cookie> cookies = ((AbstractHttpClient) httpClient).getCookieStore().getCookies();
         if (cookies != null) {
@@ -154,12 +157,7 @@ public class CnkiSpider {
         while (matcherCit.find()) {
             String citations = matcherCit.group();
             System.out.println(citations);
-//            if(){
-//                cits[0] = ;
-//            }
-//            if(){
-//                cits[1] = ;
-//            }
+
         }
         return cnkiResult;
     }
@@ -169,6 +167,7 @@ public class CnkiSpider {
         String resText = getEntity(url);
 //        System.out.println(resText);
 
+        //总结果数量
         Pattern patternCount = Pattern.compile("找到&nbsp;(.*?)&nbsp;条结果&nbsp;");
         Matcher matcherCount = patternCount.matcher(resText);
         if (matcherCount.find()) {
@@ -177,6 +176,28 @@ public class CnkiSpider {
             System.out.print("找到" + countCount + "个结果  ");
             cnkiResult.setCount(countCount);
         }
+
+        //按年度引用数
+        String urlYear="http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%E5%8F%91%E8%A1%A8%E5%B9%B4%E5%BA%A6/%e5%b9%b4%2Ccount%28*%29/%e5%b9%b4/%28%e5%b9%b4%2C%27date%27%29%23%e5%b9%b4%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Wed%20Sep%2007%202016%2016%3A14%3A50%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
+        String resYear= getEntity(urlYear);
+        Document docYear= Jsoup.parse(resYear);
+        Elements eleYearNode=docYear.select("span[class=GroupItemLinkBlue] a");
+        String[] yearsStr=eleYearNode.text().split(" ");
+        Elements timesNode=docYear.select("span[style=color:#999;]");
+        String[] timesStr=timesNode.text().split(" ");
+        for (int i = 0; i < timesStr.length; i++) {
+            String time = timesStr[i];
+            timesStr[i]=time.substring(1,time.indexOf(")"));
+        }
+        Integer[] timesInt=new Integer[timesStr.length];
+        for (int i = 0; i < timesStr.length; i++) {
+            timesInt[i]=Integer.parseInt(timesStr[i]);
+        }
+        Integer[] yearsInt=new Integer[yearsStr.length];
+        for (int i = 0; i < yearsStr.length; i++) {
+            yearsInt[i]=Integer.parseInt(yearsStr[i]);
+        }
+        System.out.println(docYear);
 
         //论文类型
         Pattern patternDB = Pattern.compile("<td(\\s*)class=\"tdrigtxt\">([^\\<]*[辑刊期刊博士硕士会议][^\\<]*)*</td>");
@@ -433,10 +454,11 @@ public class CnkiSpider {
         HttpResponse response = null;
         HttpEntity entity = null;
         Map<String, String> headers = new HashMap<String, String>();
-        httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        httpGet.setHeader("Accept", "*/*");
         httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
         httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-        httpGet.setHeader("Cookie", cookieStr);
+        String testCookie = "ASP.NET_SessionId=oginwsfhnjwknj55z3izegah; kc_cnki_net_uid=9e181a2f-ae12-9ad4-c974-5953d94d59e5; RsPerPage=20; Ecp_ClientId=4160903165400657046; LID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!; c_m_LinID=LinID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!&ot=09/07/2016 18:02:32; c_m_expire=2016-09-07 18:02:32";
+        httpGet.setHeader("Cookie", testCookie);
 
         httpGet.setHeader("Host", "epub.cnki.net");
         httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
