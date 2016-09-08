@@ -15,17 +15,9 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import pojo.CnkiResult;
 import pojo.SearchResult;
-
-import javax.xml.soap.Text;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * Created by Administrator on 2015/9/5.
@@ -69,13 +61,18 @@ public class DoubanSpider {
                 Element otherInfo = titleNode.parent().nextElementSibling();
                 String[] infos = otherInfo.text().trim().split(" / ");
                 String author = null;
-                String publisher;
+                String publisher = "";
                 Integer publishTime = 0;
                 // 有译者的，xls中的负责人都是译者
                 // 作者、出版时间、价格或者作者、译者、价格（这种只能手动处理了）
                 if (infos.length == 3) {
                     author = infos[0];
-                    publishTime = Integer.parseInt(infos[1].substring(0, 4));
+                    try{
+                        publishTime = Integer.parseInt(infos[1].substring(0, 4));
+                    }catch (NumberFormatException e){
+                        System.out.println("-----------------线上的出版社、出版时间格式匹配失败,格式解析错误");
+                    }
+
                     //作者、出版社、出版时间、价格或作者、译者、出版时间、价格（这种只能手动处理了）
                 } else if (infos.length == 4) {
                     author = infos[0];
@@ -141,7 +138,7 @@ public class DoubanSpider {
                         System.out.println("-----------------作者匹配失败：" + author);
                     }
                     if(!publishTime.equals(searchResult.getPubTime())){
-                        System.out.println("-----------------出版社匹配失败：" + author);
+                        System.out.println("-----------------出版社匹配失败：" + publisher);
                     }
                 }
             }
@@ -209,9 +206,9 @@ public class DoubanSpider {
     public static void main(String[] args) throws IOException {
         DoubanSpider douban = new DoubanSpider();
         SearchResult searchResult = new SearchResult();
-        searchResult.setAuthor("苏新宁");
-        searchResult.setTitle("中国人文社会科学图书学术影响力报告");
-        searchResult.setPublisher("中国科学社会出版社");
+        searchResult.setAuthor("王利明");
+        searchResult.setTitle("法学方法论");
+        searchResult.setPublisher("中国人民大学出版社");
         searchResult.setPubTime(2011);
         Double[] results = douban.requestDouban(searchResult);
     }

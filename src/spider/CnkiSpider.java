@@ -39,39 +39,6 @@ import sun.security.util.Length;
  */
 public class CnkiSpider {
 
-    /**
-     * @param args
-     */
-    private static String sessionId;
-    private String cookieStr;
-
-
-    public void getSessionId() throws IOException {
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        HttpResponse response = null;
-        String url = "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB";
-        HttpGet httpGet = new HttpGet(url);
-//        cookieStr = "RsPerPage=20; c_m_LinID=LinID=WEEvREcwSlJHSldTTGJhYlRBekdvdWJCWVVIRU9GaTF2YU5nMmZxN2RGZzFPenhDU3ZNdEFhNmkxSkJJTndCRFRIRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!&ot=09/07/2016 11:03:40";
-      cookieStr="RsPerPage=20; Ecp_ClientId=4160903165400657046; LID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!; c_m_LinID=LinID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!&ot=09/07/2016 17:46:20; c_m_expire=2016-09-07 17:46:20";
-        httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
-        httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-        httpGet.setHeader("Cookie", cookieStr);
-
-        response = httpClient.execute(httpGet);
-        List<Cookie> cookies = ((AbstractHttpClient) httpClient).getCookieStore().getCookies();
-        if (cookies != null) {
-            cookieStr = "RsPerPage=20; ";
-            for (int i = 0; i < cookies.size(); i++) {
-                cookieStr += cookies.get(i).getName() + "=" + cookies.get(i).getValue() + "; ";
-            }
-            cookieStr = cookieStr.substring(0, cookieStr.lastIndexOf(";"));
-        } else {
-
-        }
-//        System.out.println(cookieStr);
-    }
-
     public String searchKeyword(SearchResult param, int flag) throws IOException {
         //标题 名字 出版社 时间
         String key1 = param.getTitle();
@@ -119,22 +86,7 @@ public class CnkiSpider {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-//        System.out.println(url);
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = null;
-        HttpEntity entity = null;
-        httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
-        httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-        httpGet.setHeader("Cookie", cookieStr);
-
-        httpGet.setHeader("Host", "epub.cnki.net");
-        httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
-        response = httpClient.execute(httpGet);
-        entity = response.getEntity();
-        String resText = EntityUtils.toString(entity, "utf-8");
-//        System.out.println(resText);
+        getEntity(url);
         try {
             return "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1440989559685&keyValue=" + URLEncoder.encode(key1, "utf-8") + "&S=1";
         } catch (UnsupportedEncodingException e) {
@@ -144,28 +96,10 @@ public class CnkiSpider {
         }
     }
 
-    public CnkiResult getCitations(SearchResult searchResult) throws IOException {
-        CnkiResult cnkiResult = new CnkiResult();
-        Integer[] cits = new Integer[9];
-        String url = "http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%u53D1%u8868%u5E74%u5EA6/%u5E74%2Ccount%28*%29/%u5E74/%28%u5E74%2C%27date%27%29%23%u5E74%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Tue%20Sep%2008%202015%2000%3A29%3A23%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
-        System.out.println(url.indexOf(92));
-        String resText = getEntity(url);
-        System.out.println(resText);
-        //各年度被引2007-2015
-        Pattern patternCit = Pattern.compile("<a(\\s*)class=\"colorTipContainer([^\\<]*)");
-        Matcher matcherCit = patternCit.matcher(resText);
-        while (matcherCit.find()) {
-            String citations = matcherCit.group();
-            System.out.println(citations);
-
-        }
-        return cnkiResult;
-    }
-
+    //总结果数、论文类型，论文链接
     public CnkiResult getHtml(String url) throws IOException {
         CnkiResult cnkiResult = new CnkiResult();
         String resText = getEntity(url);
-//        System.out.println(resText);
 
         //总结果数量
         Pattern patternCount = Pattern.compile("找到&nbsp;(.*?)&nbsp;条结果&nbsp;");
@@ -176,28 +110,6 @@ public class CnkiSpider {
             System.out.print("找到" + countCount + "个结果  ");
             cnkiResult.setCount(countCount);
         }
-
-        //按年度引用数
-        String urlYear="http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%E5%8F%91%E8%A1%A8%E5%B9%B4%E5%BA%A6/%e5%b9%b4%2Ccount%28*%29/%e5%b9%b4/%28%e5%b9%b4%2C%27date%27%29%23%e5%b9%b4%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Wed%20Sep%2007%202016%2016%3A14%3A50%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
-        String resYear= getEntity(urlYear);
-        Document docYear= Jsoup.parse(resYear);
-        Elements eleYearNode=docYear.select("span[class=GroupItemLinkBlue] a");
-        String[] yearsStr=eleYearNode.text().split(" ");
-        Elements timesNode=docYear.select("span[style=color:#999;]");
-        String[] timesStr=timesNode.text().split(" ");
-        for (int i = 0; i < timesStr.length; i++) {
-            String time = timesStr[i];
-            timesStr[i]=time.substring(1,time.indexOf(")"));
-        }
-        Integer[] timesInt=new Integer[timesStr.length];
-        for (int i = 0; i < timesStr.length; i++) {
-            timesInt[i]=Integer.parseInt(timesStr[i]);
-        }
-        Integer[] yearsInt=new Integer[yearsStr.length];
-        for (int i = 0; i < yearsStr.length; i++) {
-            yearsInt[i]=Integer.parseInt(yearsStr[i]);
-        }
-        System.out.println(docYear);
 
         //论文类型
         Pattern patternDB = Pattern.compile("<td(\\s*)class=\"tdrigtxt\">([^\\<]*[辑刊期刊博士硕士会议][^\\<]*)*</td>");
@@ -394,6 +306,33 @@ public class CnkiSpider {
         return cnkiResult;
     }
 
+    //按年度引用
+    public CnkiResult getCitations(SearchResult searchResult) throws IOException {
+        CnkiResult cnkiResult = new CnkiResult();
+        Integer[] cits = new Integer[9];
+        String urlYear = "http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%E5%8F%91%E8%A1%A8%E5%B9%B4%E5%BA%A6/%e5%b9%b4%2Ccount%28*%29/%e5%b9%b4/%28%e5%b9%b4%2C%27date%27%29%23%e5%b9%b4%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Wed%20Sep%2007%202016%2016%3A14%3A50%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
+        String resYear = getEntity(urlYear);
+        Document docYear = Jsoup.parse(resYear);
+        Elements eleYearNode = docYear.select("span[class=GroupItemLinkBlue] a");
+        String[] yearsStr = eleYearNode.text().split(" ");
+        Elements timesNode = docYear.select("span[style=color:#999;]");
+        String[] timesStr = timesNode.text().split(" ");
+        for (int i = 0; i < timesStr.length; i++) {
+            String time = timesStr[i];
+            timesStr[i] = time.substring(1, time.indexOf(")"));
+        }
+        Integer[] timesInt = new Integer[timesStr.length];
+        for (int i = 0; i < timesStr.length; i++) {
+            timesInt[i] = Integer.parseInt(timesStr[i]);
+        }
+        Integer[] yearsInt = new Integer[yearsStr.length];
+        for (int i = 0; i < yearsStr.length; i++) {
+            yearsInt[i] = Integer.parseInt(yearsStr[i]);
+        }
+        return cnkiResult;
+    }
+
+    //获取机构自引和自引
     public CnkiResult getSelfCitation(CnkiResult cnkiResult, SearchResult param) throws IOException {
         List<String> urlList = new ArrayList<String>();
         Pattern pattern = null;
@@ -447,87 +386,51 @@ public class CnkiSpider {
         return cnkiResult;
     }
 
-    public String getEntity(String url) throws IOException {
+    //拉取报纸评论并提取数量
+    public String searchPaper(String key) throws IOException {
+        String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_value1=%E5%85%89%E6%98%8E%E6%97%A5%E6%8A%A5%2B%E6%96%B0%E5%8D%8E%E6%AF%8F%E6%97%A5%E7%94%B5%E8%AE%AF%2B%E6%96%87%E6%B1%87%E6%8A%A5%2B%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E7%A7%91%E5%AD%A6%E6%8A%A5&magazine_special1=%3D&txt_1_sel=SU&txt_1_value1=" + URLEncoder.encode(key, "utf-8") + "&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Tue%20Sep%2015%202015%2020%3A59%3A58%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
         CnkiResult cnkiResult = new CnkiResult();
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = null;
-        HttpEntity entity = null;
-        Map<String, String> headers = new HashMap<String, String>();
-        httpGet.setHeader("Accept", "*/*");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
-        httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-        String testCookie = "ASP.NET_SessionId=oginwsfhnjwknj55z3izegah; kc_cnki_net_uid=9e181a2f-ae12-9ad4-c974-5953d94d59e5; RsPerPage=20; Ecp_ClientId=4160903165400657046; LID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!; c_m_LinID=LinID=WEEvREcwSlJHSldRa1Fhb09jeVZSeHlOUVhQMnV5YktPOGRqZEE2b2gwRT0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!&ot=09/07/2016 18:02:32; c_m_expire=2016-09-07 18:02:32";
-        httpGet.setHeader("Cookie", testCookie);
-
-        httpGet.setHeader("Host", "epub.cnki.net");
-        httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
-        response = httpClient.execute(httpGet);
-        entity = response.getEntity();
-        String resText = EntityUtils.toString(entity, "utf-8");
-        return resText;
-    }
-
-    public String searchPaper(String key) throws IOException{
-            String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_value1=%E5%85%89%E6%98%8E%E6%97%A5%E6%8A%A5%2B%E6%96%B0%E5%8D%8E%E6%AF%8F%E6%97%A5%E7%94%B5%E8%AE%AF%2B%E6%96%87%E6%B1%87%E6%8A%A5%2B%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E7%A7%91%E5%AD%A6%E6%8A%A5&magazine_special1=%3D&txt_1_sel=SU&txt_1_value1="+URLEncoder.encode(key,"utf-8")+"&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Tue%20Sep%2015%202015%2020%3A59%3A58%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
-            CnkiResult cnkiResult = new CnkiResult();
 //            System.out.println(url);
-            DefaultHttpClient httpClient = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(url);
-            HttpResponse response = null;
-            HttpEntity entity = null;
-            Map<String, String> headers = new HashMap<String, String>();
-            httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-            httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
-            httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-            httpGet.setHeader("Cookie", cookieStr);
-
-            httpGet.setHeader("Host", "epub.cnki.net");
-            httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
-            response = httpClient.execute(httpGet);
-
-        return "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue="+URLEncoder.encode(key,"utf-8")+"&S=1";
-    }
-
-    public String getPaperCount(String url) throws IOException {
+        getEntity(url);
+        url = "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue=\" + URLEncoder.encode(key, \"utf-8\") + \"&S=1";
         String resText = getEntity(url);
-//        System.out.println(resText);
         Document doc = Jsoup.parse(resText);
         Elements pagerTitleCell = doc.select("div[class=pagerTitleCell]");
         String result = pagerTitleCell.get(0).text();
-        result = result.substring(result.indexOf("到")+2,result.indexOf("条")-1);
+        result = result.substring(result.indexOf("到") + 2, result.indexOf("条") - 1);
         return result;
-
     }
 
+    //拉取学术评论，并提取数量
     public String searchComment(String key) throws IOException {
         CnkiResult cnkiResult = new CnkiResult();
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_special1=%25&txt_1_sel=SU&txt_1_value1="+URLEncoder.encode(key,"utf-8")+"&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Wed%20Sep%2016%202015%2001%3A08%3A25%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = null;
-        HttpEntity entity = null;
-        Map<String, String> headers = new HashMap<String, String>();
-        httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
-        httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
-        httpGet.setHeader("Cookie", cookieStr);
-
-        httpGet.setHeader("Host", "epub.cnki.net");
-        httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
-        response = httpClient.execute(httpGet);
-        return "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue="+URLEncoder.encode(key,"utf-8")+"&S=1";
-
-    }
-
-    public String getCommentCount(String url) throws IOException {
+        String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_special1=%25&txt_1_sel=SU&txt_1_value1=" + URLEncoder.encode(key, "utf-8") + "&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Wed%20Sep%2016%202015%2001%3A08%3A25%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
+        getEntity(url);
+        url = "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue=\" + URLEncoder.encode(key, \"utf-8\") + \"&S=1";
         String resText = getEntity(url);
 //        System.out.println(resText);
         Document doc = Jsoup.parse(resText);
         Elements pagerTitleCell = doc.select("div[class=pagerTitleCell]");
         String result = pagerTitleCell.get(0).text();
-        result = result.substring(result.indexOf("到")+2,result.indexOf("条")-1);
+        result = result.substring(result.indexOf("到") + 2, result.indexOf("条") - 1);
         return result;
+    }
+
+    public String getEntity(String url) throws IOException {
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.setHeader("Accept", "*/*");
+        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36");
+        httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
+        String cookie = "RsPerPage=20; ASP.NET_SessionId=d2ebk255c1rilq55qryct245; kc_cnki_net_uid=081f9718-f8e2-02aa-488e-eb800f5d12ed; Ecp_ClientId=3160831131701137240; LID=WEEvREcwSlJHSldRa1FhdXNXZjNkWmtXQzdwUHhaTERsY1dFcXp2L3NTOD0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!; c_m_LinID=LinID=WEEvREcwSlJHSldRa1FhdXNXZjNkWmtXQzdwUHhaTERsY1dFcXp2L3NTOD0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4ggI8Fm4gTkoUKaID8j8gFw!!&ot=09/08/2016 14:14:48; c_m_expire=2016-09-08 14:14:48; Ecp_LoginStuts={\"IsAutoLogin\":false,\"UserName\":\"sh0301\",\"ShowName\":\"%e5%8d%97%e4%ba%ac%e5%a4%a7%e5%ad%a6\",\"UserType\":\"bk\",\"r\":\"ekZVZW\"}";
+        httpGet.setHeader("Cookie", cookie);
+        httpGet.setHeader("Host", "epub.cnki.net");
+        httpGet.setHeader("Referer", "http://epub.cnki.net/kns/brief/result.aspx?dbprefix=scdb&action=scdbsearch&db_opt=SCDB");
+        httpGet.setHeader("Upgrade-Insecure-Requests", "1");
+        HttpResponse response = httpClient.execute(httpGet);
+        HttpEntity entity = response.getEntity();
+        String resText = EntityUtils.toString(entity, "utf-8");
+        return resText;
     }
 }
 

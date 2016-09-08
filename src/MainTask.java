@@ -22,7 +22,6 @@ public class MainTask {
             CnkiResult cnkiResult;
             CnkiResult cnkiResult1;
             CnkiResult citation;
-            cnki.getSessionId();
             //无出版年
 //            String url = cnki.searchKeyword(searchResults[i],0);
 //            cnkiResult = cnki.getCitations(searchResults[i]);
@@ -33,7 +32,8 @@ public class MainTask {
             //有出版年
             String url1 = cnki.searchKeyword(searchResults[i],1);
             cnkiResult1 = cnki.getHtml(url1);
-            System.out.println(cnkiResult1);
+            // todo-fly 这个地方需要处理返回值
+            cnki.getCitations(searchResults[i]);
             citation = cnki.getSelfCitation(cnkiResult1, searchResults[i]);
             cnkiResult1.setSelfCitation(citation.getSelfCitation());
             cnkiResult1.setSelfAddCitation(citation.getSelfAddCitation());
@@ -172,8 +172,7 @@ public class MainTask {
 //            }
 //            if (keys != null) {
 //                for (int j = 0; j < keys.length; j++) {
-//                    String url = cnkiSpider.searchPaper(keys[j]);
-//                    result = cnkiSpider.getPaperCount(url);
+//                    result = cnkiSpider.searchPaper(keys[j]);
 //                    System.out.println(keys[j] + "   " + result + "   报纸评论——第" + (i + 1) + "部书的分title");
 //                    reader.writeCnkiDetail(result, keys[j], searchResults[i].getTitle());
 //                    Thread.sleep(3000);
@@ -213,8 +212,7 @@ public class MainTask {
 //                    Thread.sleep(3000);
 //                }
 //            }
-//            String url = cnkiSpider.searchComment(searchResults[i].getTitle());
-//            result = cnkiSpider.getCommentCount(url);
+//            result = cnkiSpider.searchComment(searchResults[i].getTitle());
 //            System.out.println(searchResults[i].getTitle() + "   " + result + "   学术评论——第" + (i + 1) + "部书");
 //            reader.writeCnkiDetail(result, searchResults[i].getTitle(), null);
 //            Thread.sleep(3000);
