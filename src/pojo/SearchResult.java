@@ -16,12 +16,13 @@ public class SearchResult {
     public SearchResult(){
         super();
     }
-    public SearchResult(String title, String author, String publisher, Integer pubTime){
+    public SearchResult(String title, String author, String publisher, Integer pubTime, String address){
         super();
         setPubTime(pubTime);
         setAuthor(author);
         setTitle(title);
         setPublisher(publisher);
+        setAddress(address);
     }
 
     public String getAddress() {

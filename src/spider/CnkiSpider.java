@@ -101,7 +101,7 @@ public class CnkiSpider {
         if (matcherCount.find()) {
             String countCount = matcherCount.group().substring(8, matcherCount.group().indexOf("&", 8));
             countCount = countCount.replaceAll(",", "");
-            System.out.print("找到" + countCount + "个结果  ");
+            System.out.print("总结果数：" + countCount);
             cnkiResult.setCount(countCount);
         }
 
@@ -428,7 +428,7 @@ public class CnkiSpider {
     //单元测试
     public static void main(String[] args) throws IOException {
         CnkiSpider cnki = new CnkiSpider();
-        SearchResult searchResult = new SearchResult("马克思主义理论与实践:霍布斯鲍姆史学研究","梁民愫","社会科学文献出版社",2009);
+        SearchResult searchResult = new SearchResult("马克思主义理论与实践:霍布斯鲍姆史学研究","梁民愫","社会科学文献出版社",2009, "江西师范大学");
         String url = cnki.searchKeyword(searchResult,1);
         CnkiResult cnkiResult = cnki.getHtml(url);
         Integer[] citations = cnki.getCitations(searchResult);

@@ -14,7 +14,7 @@ public class MainTask {
 
     public static void main(String[] args) throws Exception {
 
-        //cnki 总被引，自引，机构自引，论文类型，不能处理分年度的被引数据
+        //cnki 总被引，自引，机构自引，论文类型分年度的被引数据
         ExcelReader reader = new ExcelReader();
         SearchResult[] searchResults = reader.reader();
         for (int i = 0; i < searchResults.length; i++) {
