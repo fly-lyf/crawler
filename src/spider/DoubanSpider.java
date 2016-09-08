@@ -38,90 +38,111 @@ public class DoubanSpider {
         Double persons = 0.0;
         Double commentRes = 0.0;
         //爬虫
-        String query = "q=" + URLEncoder.encode(searchResult.getTitle(), "utf-8");
-        String URL = "http://www.douban.com/search?cat=1001&" + query;
+        //去空格
+        String title = searchResult.getTitle();
+        while (title.indexOf(" ") != -1) {
+            title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ") + 1, title.length());
+        }
+        //截取冒号，破折号之前的书名
+        if (title.indexOf(":") != -1) {
+            title = title.substring(0, title.indexOf(":"));
+        } else if (title.indexOf("—") != -1) {
+            title = title.substring(0, title.indexOf("—"));
+        } else if (title.indexOf("-") != -1) {
+            title = title.substring(0, title.indexOf("-"));
+        } else if (title.indexOf("•") != -1) {
+            title = title.substring(0, title.indexOf("•"));
+        }
+        String query = URLEncoder.encode(title, "utf-8");
+        String URL = "https://book.douban.com/subject_search?cat=1001&search_text=" + query;
         String resText = getEntity(URL, "www.douban.com");
         //匹配书名
         System.out.println("---开始----");
-        System.out.println("作者：" + searchResult.getAuthor() + "   书名:" + searchResult.getTitle() + "    出版社:"+ searchResult.getPublisher() + "    出版时间:"+ searchResult.getPubTime());
+        System.out.println("作者：" + searchResult.getAuthor() + "   书名:" + searchResult.getTitle() + "    出版社:" + searchResult.getPublisher() + "    出版时间:" + searchResult.getPubTime());
         Document doc = Jsoup.parse(resText);
 
         Elements titleNodes = doc.select("h2[class] a");
         for (int i = 0; i < titleNodes.size(); i++) {
             Element titleNode = titleNodes.get(i);
-            String title = titleNode.attr("title");
-            if (titleNode.select("span").size() > 0) {
-                title += titleNode.select("span").get(0).text().trim();
-            }
-            //去空格
-            while(title.indexOf(" ") != -1){
-                title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ")+1, title.length());
-            }
-            //截取冒号，破折号之前的书名
-            if(title.indexOf(":") != -1){
-                title = title.substring(0, title.indexOf(":"));
-            }else if(title.indexOf("—") != -1){
-                title = title.substring(0, title.indexOf("—"));
-            }
             // 匹配到书名之后，开始匹配作者，出版社，时间
-            // 处理中英文标点
-            if(title.contains(searchResult.getTitle())){
+            if (titleNode.attr("title").indexOf(title) != -1) {
                 Element otherInfo = titleNode.parent().nextElementSibling();
                 String[] infos = otherInfo.text().trim().split(" / ");
-                String author = infos[0];
+                String author = null;
                 String publisher;
                 Integer publishTime = 0;
-                // 没有出版社的情况
-                if(infos.length == 3){
+                // 有译者的，xls中的负责人都是译者
+                // 作者、出版时间、价格或者作者、译者、价格（这种只能手动处理了）
+                if (infos.length == 3) {
+                    author = infos[0];
                     publishTime = Integer.parseInt(infos[1].substring(0, 4));
-                }else if(infos.length == 4){
+                    //作者、出版社、出版时间、价格或作者、译者、出版时间、价格（这种只能手动处理了）
+                } else if (infos.length == 4) {
+                    author = infos[0];
                     publisher = infos[1];
                     publishTime = Integer.parseInt(infos[2].substring(0, 4));
-                }else{
-                    System.out.println("-----------------线上的出版社、出版时间格式不对-----------------------------");
+                    //出版时间和价格
+                } else if (infos.length == 2) {
+                    publishTime = Integer.parseInt(infos[0].substring(0, 4));
+                    //作者、译者、出版社、出版时间、价格
+                } else if (infos.length == 5) {
+                    author = infos[1];
+                    publisher = infos[2];
+                    publishTime = Integer.parseInt(infos[3].substring(0, 4));
+                } else {
+                    System.out.println("-----------------线上的出版社、出版时间格式匹配失败，拉到的数组长度为:" + infos.length);
                     returns[0] = null;
                     returns[1] = null;
                     return returns;
                 }
 
-                if(author.equals(searchResult.getAuthor()) && publishTime.equals(searchResult.getPubTime())){
-                    System.out.println("匹配成功");
+                if ((author == null || author.indexOf(searchResult.getAuthor()) != -1) && publishTime.equals(searchResult.getPubTime())) {
+                    System.out.println("匹配成功:" + titleNode.attr("title") + "、" + author + "、" + publishTime);
+                    if(author == null){
+                        System.out.println("------------[失败]只获取了出版时间，待确认-----------------");
+                    }
                     //拉取评价分数和评价人数
                     Element commentNode = otherInfo.nextElementSibling();
                     String commentTextNode = commentNode.select("span[class=pl]").get(0).text();
-                    if(commentTextNode.contains("少于")){
+                    if (commentTextNode.contains("少于")) {
                         //请求书目详情页面
                         System.out.println("----------------跳转详情页面------------------");
-                        String detailURL = titleNode.attr("href")+"collections";
+                        String detailURL = titleNode.attr("href") + "collections";
                         String detailResText = getEntity(detailURL, "book.douban.com");
                         Document detailDoc = Jsoup.parse(detailResText);
                         commentTextNode = detailDoc.select("div[class=article] h2 span").get(0).text();
                         Element outerCommentScoreNode = detailDoc.select("div[class=rating_detail_star]").get(0);
                         Double commentScore = 0.0;
-                        for(int j=1;j<=5;j++){
-                            Element innerCommentScoreNode = outerCommentScoreNode.select("span[class=stars"+j+" starstop]").get(0);
-                            String innerCommentPercent = ((TextNode)innerCommentScoreNode.nextElementSibling().nextSibling()).text().trim();
-                            Double percent = Double.parseDouble(innerCommentPercent.substring(0,innerCommentPercent.indexOf("%")))/100;
-                            commentScore += percent*j;
-                         }
+                        for (int j = 1; j <= 5; j++) {
+                            Element innerCommentScoreNode = outerCommentScoreNode.select("span[class=stars" + j + " starstop]").get(0);
+                            String innerCommentPercent = ((TextNode) innerCommentScoreNode.nextElementSibling().nextSibling()).text().trim();
+                            Double percent = Double.parseDouble(innerCommentPercent.substring(0, innerCommentPercent.indexOf("%"))) / 100;
+                            commentScore += percent * j;
+                        }
                         returns[0] = Double.parseDouble(commentTextNode.substring(0, commentTextNode.indexOf("人")));
                         returns[1] = commentScore;
-                    }else if(commentTextNode.contains("无人")){
+                        System.out.println("人数：" + returns[0] + "      评分：" + returns[1]);
+                        return returns;
+                    } else if (commentTextNode.contains("无人")) {
                         returns[0] = null;
                         returns[1] = null;
-                    }else{
-                        returns[0] = Double.parseDouble(commentNode.select("span[class=rating_nums]").get(0).text());
-                        returns[1] = Double.parseDouble(commentTextNode.substring(1, commentTextNode.indexOf("评价")));
+                        System.out.println("无人评价");
+                    } else {
+                        returns[0] = Double.parseDouble(commentTextNode.substring(1, commentTextNode.indexOf("人评价")));
+                        returns[1] = Double.parseDouble(commentNode.select("span[class=rating_nums]").get(0).text());
+                        System.out.println("人数：" + returns[0] + "      评分：" + returns[1]);
                     }
                     returns[0] = null;
                     returns[1] = null;
                     return returns;
 
-                }else{
-                    System.out.println("-----------------出版社、出版时间匹配错误："+author+"、"+publishTime);
-                    returns[0] = null;
-                    returns[1] = null;
-                    return returns;
+                } else {
+                    if(author.indexOf(searchResult.getAuthor()) == -1 && author != null){
+                        System.out.println("-----------------作者匹配失败：" + author);
+                    }
+                    if(!publishTime.equals(searchResult.getPubTime())){
+                        System.out.println("-----------------出版社匹配失败：" + author);
+                    }
                 }
             }
         }
@@ -163,7 +184,7 @@ public class DoubanSpider {
         httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
         httpGet.setHeader("Cookie", cookieStr);
         httpGet.setHeader("Host", host);
-        httpGet.setHeader("Referer", "http://www.douban.com");
+        httpGet.setHeader("Referer", "http://book.douban.com");
         response = httpClient.execute(httpGet);
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode == HttpStatus.SC_MOVED_TEMPORARILY || statusCode == HttpStatus.SC_MOVED_PERMANENTLY) {
@@ -172,7 +193,7 @@ public class DoubanSpider {
                 String redirectUrl = headers[0].getValue();
                 System.out.println("重定向的URL:" + redirectUrl);
                 redirectUrl = redirectUrl.replace(" ", "%20");
-                redirectUrl += "/collections";
+//                redirectUrl += "/collections";
                 resText = getEntity(redirectUrl, "book.douban.com");
             }
         } else if (statusCode == HttpStatus.SC_OK) {
@@ -182,5 +203,16 @@ public class DoubanSpider {
             System.out.println("状态码：" + statusCode);
         }
         return resText;
+    }
+
+    //单元测试，可用于验证个别的书目的查询
+    public static void main(String[] args) throws IOException {
+        DoubanSpider douban = new DoubanSpider();
+        SearchResult searchResult = new SearchResult();
+        searchResult.setAuthor("苏新宁");
+        searchResult.setTitle("中国人文社会科学图书学术影响力报告");
+        searchResult.setPublisher("中国科学社会出版社");
+        searchResult.setPubTime(2011);
+        Double[] results = douban.requestDouban(searchResult);
     }
 }

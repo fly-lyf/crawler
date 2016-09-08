@@ -10,7 +10,7 @@ import spider.NlcSpider;
 /**
  * Created by Administrator on 2015/8/18.
  */
-public class Main {
+public class MainTask {
 
     public static void main(String[] args) throws Exception {
 
