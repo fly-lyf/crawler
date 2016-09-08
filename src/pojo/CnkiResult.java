@@ -10,7 +10,6 @@ public class CnkiResult {
     private Integer[] citation;
     private Integer selfCitation;
     private Integer selfAddCitation;
-    public String aa;
 
     public Integer[] getCitation() {
         return citation;
@@ -60,4 +59,9 @@ public class CnkiResult {
         this.url = url;
     }
 
+    @Override
+    public String toString() {
+        String str = "总结果数="+this.getCount()+"\n自引数量="+this.getSelfCitation()+"\n机构自引数量="+this.getSelfAddCitation()+"\n";
+        return str;
+    }
 }

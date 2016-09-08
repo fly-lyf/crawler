@@ -13,6 +13,17 @@ public class SearchResult {
     private Integer[] countResult;
     private String address;
 
+    public SearchResult(){
+        super();
+    }
+    public SearchResult(String title, String author, String publisher, Integer pubTime){
+        super();
+        setPubTime(pubTime);
+        setAuthor(author);
+        setTitle(title);
+        setPublisher(publisher);
+    }
+
     public String getAddress() {
         return address;
     }

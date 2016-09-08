@@ -17,30 +17,31 @@ public class MainTask {
         //cnki 总被引，自引，机构自引，论文类型，不能处理分年度的被引数据
         ExcelReader reader = new ExcelReader();
         SearchResult[] searchResults = reader.reader();
-        for(int i=0;i<searchResults.length;i++) {
+        for (int i = 0; i < searchResults.length; i++) {
             CnkiSpider cnki = new CnkiSpider();
             CnkiResult cnkiResult;
             CnkiResult cnkiResult1;
             CnkiResult citation;
             //无出版年
-//            String url = cnki.searchKeyword(searchResults[i],0);
-//            cnkiResult = cnki.getCitations(searchResults[i]);
+//            String url = cnki.searchKeyword(searchResults[i],1);
 //            cnkiResult = cnki.getHtml(url);
-//            citation = cnki.getSelfCitation(cnkiResult, searchResults[i]);
-//            cnkiResult.setSelfCitation(citation.getSelfCitation());
-//            cnkiResult.setSelfAddCitation(citation.getSelfAddCitation());
+//            Integer[] citations = cnki.getCitations(searchResults[i]);
+//            cnkiResult.setCitation(citations);
+//            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResults[i]);
+//            cnkiResult.setSelfCitation(selfCitations[0]);
+//            cnkiResult.setSelfAddCitation(selfCitations[1]);
             //有出版年
-            String url1 = cnki.searchKeyword(searchResults[i],1);
+            String url1 = cnki.searchKeyword(searchResults[i], 1);
             cnkiResult1 = cnki.getHtml(url1);
-            // todo-fly 这个地方需要处理返回值
-            cnki.getCitations(searchResults[i]);
-            citation = cnki.getSelfCitation(cnkiResult1, searchResults[i]);
-            cnkiResult1.setSelfCitation(citation.getSelfCitation());
-            cnkiResult1.setSelfAddCitation(citation.getSelfAddCitation());
+            Integer[] citations = cnki.getCitations(searchResults[i]);
+            cnkiResult1.setCitation(citations);
+            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult1.getUrl(), searchResults[i]);
+            cnkiResult1.setSelfCitation(selfCitations[0]);
+            cnkiResult1.setSelfAddCitation(selfCitations[1]);
             //要加参数写入
 //            reader.writeCNKI(cnkiResult,searchResults[i],0);
-            reader.writeCNKI(cnkiResult1,searchResults[i],1);
-            Thread.sleep(6000);
+            reader.writeCNKI(cnkiResult1, searchResults[i], 1);
+            Thread.sleep(4000);
         }
 
 //         cnki webdriver 分年度获取被引数量

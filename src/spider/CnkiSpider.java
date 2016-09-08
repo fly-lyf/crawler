@@ -1,37 +1,23 @@
-package spider; /**
- * Created by Administrator on 2015/9/4.
- */
-/**
- *
- */
+package spider;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import pojo.CnkiResult;
 import pojo.SearchResult;
-import sun.security.util.Length;
-
 
 /**
  * @author zhouyi
@@ -39,6 +25,15 @@ import sun.security.util.Length;
  */
 public class CnkiSpider {
 
+    //主查询
+
+    /**
+     *
+     * @param param 查询条件对象
+     * @param flag 加不加出版时间的标志位
+     * @return
+     * @throws IOException
+     */
     public String searchKeyword(SearchResult param, int flag) throws IOException {
         //标题 名字 出版社 时间
         String key1 = param.getTitle();
@@ -306,9 +301,8 @@ public class CnkiSpider {
         return cnkiResult;
     }
 
-    //按年度引用
-    public CnkiResult getCitations(SearchResult searchResult) throws IOException {
-        CnkiResult cnkiResult = new CnkiResult();
+    //获取按年度引用
+    public Integer[] getCitations(SearchResult searchResult) throws IOException {
         Integer[] cits = new Integer[9];
         String urlYear = "http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%E5%8F%91%E8%A1%A8%E5%B9%B4%E5%BA%A6/%e5%b9%b4%2Ccount%28*%29/%e5%b9%b4/%28%e5%b9%b4%2C%27date%27%29%23%e5%b9%b4%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Wed%20Sep%2007%202016%2016%3A14%3A50%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
         String resYear = getEntity(urlYear);
@@ -329,17 +323,16 @@ public class CnkiSpider {
         for (int i = 0; i < yearsStr.length; i++) {
             yearsInt[i] = Integer.parseInt(yearsStr[i]);
         }
-        return cnkiResult;
+        return cits;
     }
 
     //获取机构自引和自引
-    public CnkiResult getSelfCitation(CnkiResult cnkiResult, SearchResult param) throws IOException {
+    public Integer[] getSelfCitation(String[] urls, SearchResult param) throws IOException {
         List<String> urlList = new ArrayList<String>();
         Pattern pattern = null;
         Matcher matcher = null;
         Integer selfCitation = 0;
         Integer selfAddCitation = 0;
-        String[] urls = cnkiResult.getUrl();
         for (int i = 0; i < urls.length; i++) {
             String resText = getEntity(urls[i]);
 //            System.out.println(resText);
@@ -380,10 +373,9 @@ public class CnkiSpider {
                 }
             }
         }
-        cnkiResult.setSelfCitation(selfCitation);
-        cnkiResult.setSelfAddCitation(selfAddCitation);
         System.out.println("自引：" + selfCitation + "   机构自引：" + selfAddCitation);
-        return cnkiResult;
+        Integer[] result = {selfCitation, selfAddCitation};
+        return result;
     }
 
     //拉取报纸评论并提取数量
@@ -416,6 +408,7 @@ public class CnkiSpider {
         return result;
     }
 
+    //发送http请求
     public String getEntity(String url) throws IOException {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(url);
@@ -431,6 +424,20 @@ public class CnkiSpider {
         HttpEntity entity = response.getEntity();
         String resText = EntityUtils.toString(entity, "utf-8");
         return resText;
+    }
+
+    //单元测试
+    public static void main(String[] args) throws IOException {
+        CnkiSpider cnki = new CnkiSpider();
+        SearchResult searchResult = new SearchResult("马克思主义理论与实践:霍布斯鲍姆史学研究","梁民愫","社会科学文献出版社",2009);
+        String url = cnki.searchKeyword(searchResult,1);
+        CnkiResult cnkiResult = cnki.getHtml(url);
+        Integer[] citations = cnki.getCitations(searchResult);
+        cnkiResult.setCitation(citations);
+        Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResult);
+        cnkiResult.setSelfCitation(selfCitations[0]);
+        cnkiResult.setSelfAddCitation(selfCitations[1]);
+        System.out.println(cnkiResult);
     }
 }
 
