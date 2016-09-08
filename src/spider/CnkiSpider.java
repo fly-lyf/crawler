@@ -25,8 +25,6 @@ import pojo.SearchResult;
  */
 public class CnkiSpider {
 
-    //主查询
-
     /**
      *
      * @param param 查询条件对象
@@ -34,6 +32,7 @@ public class CnkiSpider {
      * @return
      * @throws IOException
      */
+    //主查询
     public String searchKeyword(SearchResult param, int flag) throws IOException {
         //标题 名字 出版社 时间
         String key1 = param.getTitle();
