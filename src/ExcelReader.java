@@ -17,6 +17,8 @@ import java.io.*;
  */
 public class ExcelReader {
 
+    private int rows;
+
     public SearchResult[] reader() throws Exception {
         //cnki的读取
         //新建workbook
@@ -69,6 +71,7 @@ public class ExcelReader {
 
     /**
      * flag 表示是否加入出版年的查询条件
+     *
      * @param searchParam
      * @param flag
      * @throws Exception
@@ -263,7 +266,7 @@ public class ExcelReader {
         if (cnkiResult.getCount() != null) {
             Integer count = Integer.parseInt(cnkiResult.getCount());
             WritableCell wc = ws.getWritableCell(rows, 4);
-            Number num = new Number(14, rows, count);
+            Number num = new Number(15, rows, count);
             ws.addCell(num);
         }
 
@@ -288,10 +291,10 @@ public class ExcelReader {
                 }
             }
         }
-        Number num1 = new Number(17, rows, dct);
-        Number num2 = new Number(16, rows, mst);
-        Number num3 = new Number(18, rows, conf);
-        Number num4 = new Number(15, rows, mag);
+        Number num1 = new Number(18, rows, dct);
+        Number num2 = new Number(17, rows, mst);
+        Number num3 = new Number(19, rows, conf);
+        Number num4 = new Number(16, rows, mag);
         ws.addCell(num1);
         ws.addCell(num2);
         ws.addCell(num3);
@@ -299,11 +302,56 @@ public class ExcelReader {
         //自引数
         Integer selfCitation = cnkiResult.getSelfCitation();
         Integer selfAddCitation = cnkiResult.getSelfAddCitation();
-        Number citation1 = new Number(19, rows, selfCitation);
-        Number citation2 = new Number(20, rows, selfAddCitation);
+        Number citation1 = new Number(20, rows, selfCitation);
+        Number citation2 = new Number(21, rows, selfAddCitation);
         ws.addCell(citation1);
         ws.addCell(citation2);
 
+        //按年度引用数
+//        Integer[] yearCitation = cnkiResult.getCitation();
+//        int length = yearCitation.length;
+//        if ((2016 - yearCitation[0]) == 0) {
+//            for (int i = 0; i < yearCitation.length - 1; i++) {
+//                if (yearCitation[i+1]==null)
+//                {break;}
+//                Number yearCit = new Number(4 + i, rows, yearCitation[i + 1]);
+//                ws.addCell(yearCit);
+//            }
+//        } else {
+//            for (int i = 0; i < (2016 - yearCitation[0]); i++) {
+//                if (yearCitation[i]==null)
+//                {break;}
+//                Number yearCit0 = new Number(4 + i, rows, 0);
+//                ws.addCell(yearCit0);
+//            }
+//            for (int i = 0; i < yearCitation.length - 1; i++) {
+//                if (yearCitation[i+1]==null){
+//                    break;
+//                }
+//                Number yearCit = new Number((2016 - yearCitation[0]) + 4 + i, rows, yearCitation[i + 1]);
+//                ws.addCell(yearCit);
+//            }
+//
+//        }
+        Integer[] yearCitation = cnkiResult.getCitation();
+        for(int i=0;i<yearCitation.length;i++)
+        {
+            if (yearCitation[i]==null){
+                    break;
+                }
+                Number yearCit = new Number(4+i, rows, yearCitation[i]);
+                ws.addCell(yearCit);
+        }
+        int totleYearCit=0;
+        for(int i=0;i<yearCitation.length ;i++)
+        {
+            if (yearCitation[i]==null){
+                break;
+            }
+            totleYearCit+=yearCitation[i];
+        }
+        Number totleYearCits = new Number(14, rows, totleYearCit);
+        ws.addCell(totleYearCits);
         wwb.write();
         wwb.close();
         rwb.close();

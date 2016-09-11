@@ -302,7 +302,7 @@ public class CnkiSpider {
 
     //获取按年度引用
     public Integer[] getCitations(SearchResult searchResult) throws IOException {
-        Integer[] cits = new Integer[9];
+        Integer[] cits = new Integer[10];
         String urlYear = "http://epub.cnki.net/kns/group/DoGroupLeft.ashx?action=1&Param=ASP.brief_result_aspx%23SCDB/%E5%8F%91%E8%A1%A8%E5%B9%B4%E5%BA%A6/%e5%b9%b4%2Ccount%28*%29/%e5%b9%b4/%28%e5%b9%b4%2C%27date%27%29%23%e5%b9%b4%24desc/1000000%24/-/40/40000/ButtonView&cid=0&clayer=0&isAutoInit=1&__=Wed%20Sep%2007%202016%2016%3A14%3A50%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
         String resYear = getEntity(urlYear);
         Document docYear = Jsoup.parse(resYear);
@@ -310,17 +310,35 @@ public class CnkiSpider {
         String[] yearsStr = eleYearNode.text().split(" ");
         Elements timesNode = docYear.select("span[style=color:#999;]");
         String[] timesStr = timesNode.text().split(" ");
-        for (int i = 0; i < timesStr.length; i++) {
-            String time = timesStr[i];
-            timesStr[i] = time.substring(1, time.indexOf(")"));
+        if(!timesStr[0].equals("")){
+            for (int i = 0; i < timesStr.length; i++) {
+                String time = timesStr[i];
+                timesStr[i] = time.substring(1, time.indexOf(")"));
+            }
+            Integer[] timesInt = new Integer[timesStr.length];
+            for (int i = 0; i < timesStr.length; i++) {
+                timesInt[i] = Integer.parseInt(timesStr[i]);
+            }
+            Integer[] yearsInt = new Integer[yearsStr.length];
+            for (int i = 0; i < yearsStr.length; i++) {
+                yearsInt[i] = Integer.parseInt(yearsStr[i]);
+            }
+
+            for (int i=0, j=0;i<timesStr.length;j++)
+            {
+
+                if(yearsInt[i]==(2016-j))
+                {
+                    cits[j]=timesInt[i];
+                    i++;
+                }
+                else cits[j]=0;
+
+            }
         }
-        Integer[] timesInt = new Integer[timesStr.length];
-        for (int i = 0; i < timesStr.length; i++) {
-            timesInt[i] = Integer.parseInt(timesStr[i]);
-        }
-        Integer[] yearsInt = new Integer[yearsStr.length];
-        for (int i = 0; i < yearsStr.length; i++) {
-            yearsInt[i] = Integer.parseInt(yearsStr[i]);
+        else{
+            for(int i=0;i<10;i++)
+            {cits[i]=0;}
         }
         return cits;
     }
