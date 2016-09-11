@@ -16,6 +16,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,97 +30,101 @@ public class DangdangSpider {
     String cookieStr;
 
     //返回评论数
-//    public Integer getParams(SearchResult searchResult) throws Exception {
-//        System.out.print("书名：" + searchResult.getTitle() + "   作者：" + searchResult.getAuthor());
-//        Integer result = null;
-//        int ddsale = 0;
-//        String url = "http://search.dangdang.com/?key="+ URLEncoder.encode(searchResult.getTitle(),"utf-8")+"+"+URLEncoder.encode(searchResult.getAuthor(),"utf-8")+"&ddsale=1";
-//        String resText = getEntity(url);
-////        System.out.println(resText);
-//        Pattern patternDD = Pattern.compile("<p(\\s*)class=\"dang\"([^\\<]*)");
-//        Matcher matcherDD = patternDD.matcher(resText);
-//        while (matcherDD.find()){
-//            String str = matcherDD.group();
-////            System.out.println(str);
-//            ddsale = 1;
-//        }
-//        if(ddsale == 1){
-//            Pattern patternBook = Pattern.compile("class=\"search_comment_num\"([^\\<]*)");
-//            Matcher matcherBook = patternBook.matcher(resText);
-//            if(matcherBook.find()){
-//                String str = matcherBook.group();
-//                str = str.substring(str.lastIndexOf(">")+1,str.length());
-//                System.out.println("   "+str);
-//                str = str.substring(0,str.indexOf("条"));
-//                result = Integer.parseInt(str);
-//            }
-//        }else if(ddsale == 0) {
-//            System.out.print("   ----书名+作者没有当当自营----");
-//            String url1 = "http://search.dangdang.com/?key=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") +"&ddsale=1";
-//            resText = getEntity(url1);
-//            Pattern patternBook = Pattern.compile("class=\"search_comment_num\"([^\\<]*)");
-//            Matcher matcherBook = patternBook.matcher(resText);
-//            if (matcherBook.find()) {
-//                String str = matcherBook.group();
-//                str = str.substring(str.lastIndexOf(">") + 1, str.length());
-//                System.out.println("   " + str);
-//                str = str.substring(0, str.indexOf("条"));
-//                result = Integer.parseInt(str);
-//            } else {
-//                System.out.println("   ----只查书名没有当当自营----");
-//            }
-//        }
-//
-//        return result;
-//    }
-
-    //返回url
-    public String getParams(SearchResult searchResult) throws Exception {
-        System.out.println("___________________________________________________");
-        System.out.print("书名：" + searchResult.getTitle() + "   作者：" + searchResult.getAuthor()+"   ");
-        String result = null;
-        int ddsale = 0;
-        String url = "http://search.dangdang.com/?key="+ URLEncoder.encode(searchResult.getTitle(),"utf-8")+"+"+URLEncoder.encode(searchResult.getAuthor(),"utf-8")+"&ddsale=1";
+    public Integer getCommentsByParams(SearchResult searchResult) throws Exception {
+        System.out.println("书名：" + searchResult.getTitle() + "   作者：" + searchResult.getAuthor() + "    出版社：" + searchResult.getPublisher());
+        Integer result = null;
+        int ddSale = 0;
+        String title = searchResult.getTitle();
+        //截取冒号，破折号之前的书名
+        if (title.indexOf(":") != -1) {
+            title = title.substring(0, title.indexOf(":"));
+        } else if (title.indexOf("—") != -1) {
+            title = title.substring(0, title.indexOf("—"));
+        } else if (title.indexOf("-") != -1) {
+            title = title.substring(0, title.indexOf("-"));
+        } else if (title.indexOf("•") != -1) {
+            title = title.substring(0, title.indexOf("•"));
+        } else if (title.indexOf("·") != -1) {
+            title = title.substring(0, title.indexOf("·"));
+        } else if (title.indexOf("、") != -1) {
+            title = title.substring(0, title.indexOf("、"));
+        }
+        String url = "http://search.dangdang.com/?key=" + URLEncoder.encode(title, "utf-8") + "+" + URLEncoder.encode(searchResult.getAuthor(), "utf-8") + "&ddSale=1";
         String resText = getEntity(url);
-//        System.out.println(resText);
-        Pattern patternDD = Pattern.compile("<p(\\s*)class=\"dang\"([^\\<]*)");
-        Matcher matcherDD = patternDD.matcher(resText);
-        while (matcherDD.find()){
-            String str = matcherDD.group();
-//            System.out.println(str);
-            ddsale = 1;
+        System.out.println("url: " + url);
+        //        System.out.println(resText);
+        Document doc = Jsoup.parse(new URL(url).openStream(), "gbk", url);
+        if (doc.select("p[class=dang]").size() <= 0) {
+            System.out.println("---------没有当当自营-----------");
         }
-        String str = "";
-        if(ddsale == 1){
-            Document doc = Jsoup.parse(resText);
-            Elements urla = doc.select("li p a");
-            for (Element a : urla) {
-                if(a.attr("title").contains(searchResult.getTitle()) || searchResult.getTitle().contains(a.attr("title"))){
-                    str = a.attr("href");
-                    System.out.println(str);
-                    return str;
+        Elements titleNodes = doc.select("a[name=itemlist-title]");
+        for (int i = 0; i < titleNodes.size(); i++) {
+            //如果有当当自营，非自营的就跳过
+            if (doc.select("p[class=dang]").size() > 0 && titleNodes.get(i).parent().parent().select("p[class=dang]").size() <= 0) {
+                continue;
+            }
+            Element parentLi = titleNodes.get(i).parent().parent();
+            Element authorNode = null;
+            Elements ab = parentLi.select("a[name=itemlist-author]");
+            if (parentLi.select("a[name=itemlist-author]").size() > 0) {
+                authorNode = parentLi.select("a[name=itemlist-author]").get(0);
+            }
+            Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
+            Element publisherNode = parentLi.select("a[name=P_cbs]").get(0);
+            if (titleNodes.get(i).attr("title").contains(title)) {
+                System.out.println(authorNode.attr("title"));
+                if (authorNode == null || authorNode.attr("title").contains(searchResult.getAuthor())) {
+                    if (publisherNode == null || publisherNode.attr("title").contains(searchResult.getPublisher())) {
+                        if(authorNode ==null && publisherNode == null){
+                            System.out.println("失败，既没有作者信息，也没有出版社信息");
+                        }else{
+                            System.out.println("-------查询条件：作者+书名，书名匹配成功，作者或出版社至少一个匹配成功-------：");
+                            String commentStr = commentNode.text();
+                            System.out.println(commentStr);
+                            Integer commentCount = Integer.parseInt(commentStr.substring(0, commentStr.indexOf("条")));
+                            result = commentCount;
+                            return result;
+                        }
+                    } else {
+                        System.out.println("-------查询条件：作者+书名，出版社匹配失败-----------");
+                    }
+                } else {
+                    System.out.println("-------查询条件：作者+书名，作者匹配失败-----------");
                 }
             }
-        }else if(ddsale == 0) {
-            System.out.print("   ----书名+作者没有当当自营----");
-            String url1 = "http://search.dangdang.com/?key=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") +"&ddsale=1";
-            Thread.sleep(2000);
-            resText = getEntity(url1);
-            Document doc = Jsoup.parse(resText);
-            Elements urla = doc.select("li p a");
-            for (Element a : urla) {
-                if (a.attr("title").contains(searchResult.getTitle()) || searchResult.getTitle().contains(a.attr("title"))){
-                    str = a.attr("href");
-                    System.out.println(str);
-                    return str;
+        }
+        String url1 = "http://search.dangdang.com/?key=" + URLEncoder.encode(title, "utf-8") + "&ddSale=1";
+        System.out.println("url: " + url);
+        resText = getEntity(url1);
+        Document noOfficeSaleDoc = Jsoup.parse(new URL(url1).openStream(), "gbk", url);
+        titleNodes = noOfficeSaleDoc.select("a[name=itemlist-title] font");
+        for (int i = 0; i < titleNodes.size(); i++) {
+            Element parentLi = titleNodes.get(i).parent().parent();
+            Element authorNode = null;
+            if (parentLi.select("a[name=itemlist-author]").size() > 0) {
+                authorNode = parentLi.select("a[name=itemlist-author]").get(0);
+            }
+            Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
+            if (titleNodes.get(i).attr("title").contains(title)) {
+                if (authorNode == null || authorNode.attr("title").contains(searchResult.getAuthor())) {
+                    if(authorNode == null){
+                        System.out.println("-------查询条件：书名，作者书名匹配成功-------：");
+                    }else {
+                        System.out.println("-------查询条件：书名，只有书名匹配成功，作者匹配失败-------：");
+                    }
+                    String commentStr = commentNode.text();
+                    System.out.println(commentStr);
+                    Integer commentCount = Integer.parseInt(commentStr.substring(0, commentStr.indexOf("条")));
+                    result = commentCount;
+                    return result;
                 }
             }
-                System.out.println("   ----只查书名没有当当自营----");
+            System.out.println("------------查询条件：书名，书名匹配失败或作者匹配失败-----------");
         }
+        System.out.println("----彻底失败失败----");
 
-        return null;
+        return result;
     }
-
 
     public String getEntity(String url) throws IOException {
         CnkiResult cnkiResult = new CnkiResult();
@@ -150,40 +155,40 @@ public class DangdangSpider {
         Document doc = Jsoup.parse(resText);
         //书名
         Elements title = doc.select("div[class=head] h1");
-         for(Element h : title){
-             System.out.print(h.text() + "   ");
-             gtResult.setTitle(h.text());
-         }
+        for (Element h : title) {
+            System.out.print(h.text() + "   ");
+            gtResult.setTitle(h.text());
+        }
         //作者，出版社，出版时间，isbn，分类
         Elements author = doc.select("div[class=clearfix m_t6]");
-        for(Element h : author){
-            if(h.toString().contains("作&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;者")) {
+        for (Element h : author) {
+            if (h.toString().contains("作&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;者")) {
                 System.out.print(h.text() + "   ");
                 gtResult.setAllAuthor(h.text());
             }
-            if(h.toString().contains("出&nbsp;版&nbsp;社")){
+            if (h.toString().contains("出&nbsp;版&nbsp;社")) {
                 System.out.print(h.text() + "   ");
                 gtResult.setPublisher(h.text());
             }
-            if(h.toString().contains("出版时间")){
+            if (h.toString().contains("出版时间")) {
                 System.out.print(h.text() + "   ");
                 gtResult.setPubTime(h.text());
             }
-            if(h.toString().contains("ＩＳＢＮ")){
+            if (h.toString().contains("ＩＳＢＮ")) {
                 System.out.print(h.text() + "   ");
                 gtResult.setISBN(h.text());
             }
-            if(h.toString().contains("所属分类")){
+            if (h.toString().contains("所属分类")) {
                 System.out.print(h.text() + "   ");
                 gtResult.setSort(h.text());
             }
         }
-        if(author.size()<=0){
+        if (author.size() <= 0) {
             System.out.println("----没有作者神马的----");
         }
         //定价,未测试代码
         Elements price = doc.select("span[id=originalPriceTag]");
-        for(Element p:price){
+        for (Element p : price) {
             System.out.print(p.html() + "   ");
             gtResult.setPrice(p.html());
         }
@@ -193,15 +198,22 @@ public class DangdangSpider {
 
         //页数
         Elements page = doc.select("ul[class=key clearfix] li");
-        for(Element h : page){
-            if(h.html().contains("页 数")){
+        for (Element h : page) {
+            if (h.html().contains("页 数")) {
                 System.out.print(h.html() + "    ");
                 gtResult.setPage(h.html());
             }
         }
-        if(page.size()<=0){
+        if (page.size() <= 0) {
             System.out.println("----没有页码----");
         }
         return gtResult;
+    }
+
+    public static void main(String[] args) throws Exception {
+        DangdangSpider dangdangSpider = new spider.DangdangSpider();
+        SearchResult searchResult = new SearchResult("社区体育服务绩效评价", "陈旸", "北京师范大学出版社", 0, "");
+        System.out.println(dangdangSpider.getCommentsByParams(searchResult));
+
     }
 }

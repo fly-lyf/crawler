@@ -1,11 +1,7 @@
-import excel操作.DuplicateCNKI;
-import pojo.CnkiResult;
-import pojo.GTResult;
+import excel.ExcelReader;
 import pojo.SearchResult;
-import spider.CnkiSpider;
 import spider.DangdangSpider;
 import spider.DoubanSpider;
-import spider.NlcSpider;
 
 /**
  * Created by Administrator on 2015/8/18.
@@ -15,45 +11,32 @@ public class MainTask {
     public static void main(String[] args) throws Exception {
 
         //cnki 总被引，自引，机构自引，论文类型分年度的被引数据
-        ExcelReader reader = new ExcelReader();
-        SearchResult[] searchResults = reader.reader();
-        for (int i = 0; i < searchResults.length; i++) {
-            CnkiSpider cnki = new CnkiSpider();
-            CnkiResult cnkiResult;
-            CnkiResult cnkiResult1;
-            CnkiResult citation;
-            //无出版年
-//            String url = cnki.searchKeyword(searchResults[i],1);
-//            cnkiResult = cnki.getHtml(url);
-//            Integer[] citations = cnki.getCitations(searchResults[i]);
-//            cnkiResult.setCitation(citations);
-//            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResults[i]);
-//            cnkiResult.setSelfCitation(selfCitations[0]);
-//            cnkiResult.setSelfAddCitation(selfCitations[1]);
-            //有出版年
-            String url1 = cnki.searchKeyword(searchResults[i], 1);
-            cnkiResult1 = cnki.getHtml(url1);
-            Integer[] citations = cnki.getCitations(searchResults[i]);
-            cnkiResult1.setCitation(citations);
-            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult1.getUrl(), searchResults[i]);
-            cnkiResult1.setSelfCitation(selfCitations[0]);
-            cnkiResult1.setSelfAddCitation(selfCitations[1]);
-            //要加参数写入
-//            reader.writeCNKI(cnkiResult,searchResults[i],0);
-            reader.writeCNKI(cnkiResult1, searchResults[i], 1);
-            Thread.sleep(4000);
-        }
-
-//         cnki webdriver 分年度获取被引数量
 //        ExcelReader reader = new ExcelReader();
-//        pojo.SearchResult params[] = reader.reader();
-//        for(int i=0;i<params.length;i++){
-//            pojo.SearchResult searchResult;
-//            TestWebDriver web = new TestWebDriver();
-//            searchResult = web.getResult(params[i]);
-//            reader.writer(searchResult,0);
-//            searchResult = web.getTimeResult(params[i]);
-//            reader.writer(searchResult,1);
+//        SearchResult[] searchResults = reader.reader();
+//        for (int i = 0; i < searchResults.length; i++) {
+//            CnkiSpider cnki = new CnkiSpider();
+//            CnkiResult cnkiResult;
+//            CnkiResult cnkiResult1;
+//            CnkiResult citation;
+//            //无出版年
+////            String url = cnki.searchKeyword(searchResults[i],1);
+////            cnkiResult = cnki.getHtml(url);
+////            Integer[] citations = cnki.getCitations(searchResults[i]);
+////            cnkiResult.setCitation(citations);
+////            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResults[i]);
+////            cnkiResult.setSelfCitation(selfCitations[0]);
+////            cnkiResult.setSelfAddCitation(selfCitations[1]);
+//            //有出版年
+//            String url1 = cnki.searchKeyword(searchResults[i], 1);
+//            cnkiResult1 = cnki.getHtml(url1);
+//            Integer[] citations = cnki.getCitations(searchResults[i]);
+//            cnkiResult1.setCitation(citations);
+//            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult1.getUrl(), searchResults[i]);
+//            cnkiResult1.setSelfCitation(selfCitations[0]);
+//            cnkiResult1.setSelfAddCitation(selfCitations[1]);
+//            //要加参数写入
+////            reader.writeCNKI(cnkiResult,searchResults[i],0);
+//            reader.writeCNKI(cnkiResult1, searchResults[i], 1);
 //            Thread.sleep(4000);
 //        }
 
@@ -61,34 +44,23 @@ public class MainTask {
 //        ExcelReader reader = new ExcelReader();
 //        pojo.SearchResult[] searchResults = reader.reader();
 //        Double[] results = null;
-//        for(int i=0;i<searchResults.length;i++) {
+//        for (int i = 0; i < searchResults.length; i++) {
 //            DoubanSpider douban = new DoubanSpider();
 //            results = douban.requestDouban(searchResults[i]);
-//            reader.writeDouBan(results);
-//            Thread.sleep(5000);
+//            reader.writeDouBan(searchResults[i], results);
+//            Thread.sleep(3000);
 //        }
-
 
         //当当
-//        ExcelReader reader = new ExcelReader();
-//        TestWebDriver web = new TestWebDriver();
-//        pojo.SearchResult[] searchResults = reader.reader();
-//        Integer dangdang;
-//        for(int i=0;i<searchResults.length;i++) {
-//            dangdang = web.getDangDangResult(searchResults[i]);
-//            reader.writeDangdang(dangdang,searchResults[i]);
-//        }
-
-        //当当spider
-//        ExcelReader reader = new ExcelReader();
-//        spider.DangdangSpider dangdangSpider = new spider.DangdangSpider();
-//        SearchResult[] searchResults = reader.reader();
-//        Integer dangdang;
-//        for(int i=0;i<searchResults.length;i++) {
-//            dangdang = dangdangSpider.getParams(searchResults[i]);
-//            reader.writeDangdang(dangdang,searchResults[i]);
-//            Thread.sleep(5000);
-//        }
+        ExcelReader reader = new ExcelReader();
+        DangdangSpider dangdangSpider = new DangdangSpider();
+        SearchResult[] searchResults = reader.reader();
+        Integer dangdang;
+        for(int i=0;i<searchResults.length;i++) {
+            dangdang = dangdangSpider.getCommentsByParams(searchResults[i]);
+            reader.writeDangdang(dangdang,searchResults[i]);
+            Thread.sleep(3000);
+        }
 
         //亚马逊
 //        ExcelReader reader = new ExcelReader();
@@ -153,6 +125,7 @@ public class MainTask {
 //            }
 //            Thread.sleep(2000);
 //        }
+
         //报纸评论
 //        ExcelReader reader = new ExcelReader();
 //        CnkiSpider cnkiSpider = new CnkiSpider();
@@ -228,8 +201,5 @@ public class MainTask {
         //首次被引间隔
 //        ExcelReader excelReader = new ExcelReader();
 //        Integer result[] = excelReader.readFinal();
-
-        //表二
-
     }
 }
