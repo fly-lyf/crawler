@@ -360,19 +360,21 @@ public class ExcelReader {
         rwb.close();
     }
 
-    public void writeAmazon(Double[] amazon) throws Exception {
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+    public void writeAmazon(Double[] amazon, SearchResult searchResult) throws Exception {
+        Workbook rwb = Workbook.getWorkbook(new File("resources/amazon-result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/amazon-result.xls"), rwb);//copy
         WritableSheet ws = wwb.getSheet(0);
         int rows = ws.getRows();
+        Label title = new Label(0, rows, searchResult.getTitle());
+        ws.addCell(title);
         if (amazon[0] != null) {
-            Number num = new Number(28, rows, amazon[0].intValue());
-            Number num1 = new Number(29, rows, amazon[1]);
+            Number num = new Number(5, rows, amazon[0].intValue());
+            Number num1 = new Number(6, rows, amazon[1]);
             ws.addCell(num);
             ws.addCell(num1);
         } else {
-            Label num = new Label(28, rows, "--");
-            Label num1 = new Label(29, rows, "--");
+            Label num = new Label(5, rows, "--");
+            Label num1 = new Label(6, rows, "--");
             ws.addCell(num);
             ws.addCell(num1);
         }

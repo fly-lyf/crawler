@@ -1,5 +1,6 @@
 package spider;
 
+import com.google.gson.Gson;
 import com.sun.deploy.net.URLEncoder;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,10 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EncodingUtils;
 import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import pojo.CnkiResult;
 import pojo.SearchResult;
 
@@ -27,58 +32,77 @@ import java.util.regex.Pattern;
 public class AmazonSpider {
     private String cookieStr;
 
-    public Double[] getParams(SearchResult searchResult) throws IOException {
+    public Double[] requestAmazon(SearchResult searchResult) throws IOException {
         Double[] result = new Double[2];
-        String url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=%E4%BA%9A%E9%A9%AC%E9%80%8A%E7%BD%91%E7%AB%99&url=search-alias%3Dstripbooks&field-keywords=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") + "+" + URLEncoder.encode(searchResult.getAuthor(), "utf-8");
+        String searchTitle = searchResult.getTitle();
+        String searchAuthor = searchResult.getAuthor();
+        //截取冒号，破折号之前的书名
+        if (searchTitle.indexOf(":") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf(":"));
+        } else if (searchTitle.indexOf("—") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("—"));
+        } else if (searchTitle.indexOf("-") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("-"));
+        } else if (searchTitle.indexOf("•") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("•"));
+        } else if (searchTitle.indexOf("·") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("·"));
+        } else if (searchTitle.indexOf("、") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("、"));
+        }
+        if (searchAuthor.indexOf("•") != -1) {
+            searchAuthor = searchAuthor.substring(0, searchAuthor.indexOf("•"));
+        } else if (searchAuthor.indexOf("·") != -1) {
+            searchAuthor = searchAuthor.substring(0, searchAuthor.indexOf("·"));
+        }
+        String url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=%E4%BA%9A%E9%A9%AC%E9%80%8A%E7%BD%91%E7%AB%99&url=search-alias%3Dstripbooks&field-keywords=" + URLEncoder.encode(searchTitle, "utf-8") + "+" + URLEncoder.encode(searchAuthor, "utf-8");
+//        直接获取json
+//        String query = URLEncoder.encode(searchTitle, "utf-8") + "+" + URLEncoder.encode(author, "utf-8");
+//        String url = "https://www.amazon.cn/mn/search/ajax/ref=nb_sb_noss?__mk_zh_CN=%E4%BA%9A%E9%A9%AC%E9%80%8A%E7%BD%91%E7%AB%99&url=search-alias=stripbooks&field-keywords="+query+"&"+URLEncoder.encode("rh=n:658390051,k:"+query+URLEncoder.encode("&fromHash=/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias=stripbooks&field-keywords="+query+"&rh=n:658390051,k:"+query+"&section=ATF,BTF&fromApp=gp/search&fromPage=results&fromPageConstruction=auisearch&version=2&oqid=1473696564&atfLayout=list", "utf-8"),"utf-8");
+        System.out.println("---------------开始-------------------");
+        System.out.println(url);
+        System.out.println("书名、作者名为： " + searchTitle + "   " + searchAuthor);
         String resText = getEntity(url);
-//        System.out.println(resText);
-        System.out.print("书名+作者名为：" + searchResult.getTitle() + "+" + searchResult.getAuthor());
+        Document doc = Jsoup.parse(resText);
+//        resText = resText.replace("&&&", ",");
+
         //匹配书名
-        Pattern patternTitle = Pattern.compile("<h2(\\s*)class=\"a-size-medium(\\s*)a-color-null(\\s*)s-inline(\\s*)s-access-title(\\s*)a-text-normal\">([^\\<]*)");
-        Matcher matcherTitle = patternTitle.matcher(resText);
-        String title = null;
-        while (matcherTitle.find()) {
-            title = matcherTitle.group();
-            title = title.substring(title.lastIndexOf(">") + 1, title.length());
-            title = StringEscapeUtils.unescapeHtml3(title);
-
-            if (title == null) {
-                title = "error错误";
-            }
-            if (searchResult.getTitle().contains(title) || title.contains(searchResult.getTitle())) {
-                //匹配评分
-                Pattern patternScore = Pattern.compile("<span(\\s*)class=\"a-icon-alt\">([^\\<]*)");
-                Matcher matcherScore = patternScore.matcher(resText);
-                while (matcherScore.find()) {
-                    String score = matcherScore.group();
-                    score = score.substring(score.lastIndexOf(">") + 1, score.length());
-                    if (score.contains("平均")) {
-                        score = score.substring(2, score.indexOf("星"));
-                        score = score.trim();
-                        System.out.print("    得分为：" + score);
-                        result[1] = Double.parseDouble(score);
-                        break;
+        Elements bookList = doc.select("li[class=s-result-item celwidget]");
+        for (int i = 0; i < bookList.size(); i++) {
+            Element title = bookList.get(i).select("h2[class=a-size-medium a-color-null s-inline  s-access-title  a-text-normal]").get(0);
+            Elements author = bookList.get(i).select("div[class=a-row a-spacing-none] span[class=a-size-small a-color-secondary]");
+            if(title != null && title.attr("data-attribute").indexOf(searchTitle) != -1){
+                    if(author.get(1).text().indexOf(searchAuthor) != -1){
+                        System.out.println("---------匹配成功----------");
+                        Element commentNode = null;
+                        Element countNode = null;
+                        if(bookList.get(i).select("span[class=a-icon-alt]").size() > 0){
+                            commentNode = bookList.get(i).select("span[class=a-icon-alt]").get(0);
+                            Elements test =  bookList.get(i).select("div[class=a-row a-spacing-mini]");
+                            countNode = bookList.get(i).select("div[class=a-row a-spacing-mini]").get(0).select("a[rel=noopener noreferrer]").get(0);
+                        }
+                        if(commentNode != null){
+                            String countStr = countNode.text();
+                            String commentStr = commentNode.text();
+                            result[0] = Double.parseDouble(countStr);
+                            result[1] = Double.parseDouble(commentStr.substring(2, commentStr.indexOf(" 星")));
+                            System.out.println("评价人数：  "+result[0]+"    得分："+result[1]);
+                            return result;
+                        }else {
+                            System.out.println("没有评价信息");
+                            result[0] = null;
+                            result[1] = null;
+                            return result;
+                        }
+                    }else {
+                        System.out.println("----------作者匹配失败--------");
                     }
-                }
-                //匹配评论人数
-                Pattern patternPerson = Pattern.compile("<a(\\s*)class=\"a-size-small(\\s*)a-link-normal(\\s*)a-text-normal\"([^\\<]*)");
-                Matcher matcherPerson = patternPerson.matcher(resText);
-                while (matcherPerson.find()) {
-                    String person = matcherPerson.group();
-                    person = person.substring(person.lastIndexOf(">") + 1, person.length());
-                    if (StringUtils.isNumeric(person)) {
-                        result[0] = Double.parseDouble(person);
-                        System.out.println("   评论人数为：" + person);
-                        break;
-                    }
-
-                }
-                break;
+            }else {
+                System.out.println("------书名匹配失败------");
             }
         }
-        if (result[0] == null) {
-            System.out.println("   无评论信息");
-        }
+        result[0] = null;
+        result[1] = null;
         return result;
     }
 
@@ -132,5 +156,13 @@ public class AmazonSpider {
             System.out.println("状态码：" + statusCode);
         }
         return resText;
+    }
+
+    //单元测试
+    public static void main(String[] args) throws IOException {
+        AmazonSpider amazonSpider = new AmazonSpider();
+        SearchResult searchResult = new SearchResult("古英语与中古英语文学通论","陈才宇", "", 0, "");
+        System.out.println(amazonSpider.requestAmazon(searchResult));
+
     }
 }
