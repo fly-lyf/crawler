@@ -1,15 +1,12 @@
-package excel操作;
+package excel;
 
 import jxl.Cell;
-import jxl.Sheet;
 import jxl.Workbook;
 import jxl.write.Label;
-import jxl.write.WritableCell;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by Administrator on 2015/9/8.

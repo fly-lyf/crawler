@@ -191,6 +191,7 @@ public class DoubanSpider {
                         returns[0] = Double.parseDouble(commentTextNode.substring(1, commentTextNode.indexOf("人评价")));
                         returns[1] = Double.parseDouble(commentNode.select("span[class=rating_nums]").get(0).text());
                         System.out.println("人数：" + returns[0] + "      评分：" + returns[1]);
+                        return returns;
                     }
                     returns[0] = null;
                     returns[1] = null;
@@ -269,10 +270,11 @@ public class DoubanSpider {
     public static void main(String[] args) throws IOException {
         DoubanSpider douban = new DoubanSpider();
         SearchResult searchResult = new SearchResult();
-        searchResult.setAuthor("吴贤静");
-        searchResult.setTitle("“生态人”:环境法上的人之形象");
-        searchResult.setPublisher("中国人民大学出版社");
-        searchResult.setPubTime(2014);
+        searchResult.setAuthor("陈才宇");
+        searchResult.setTitle("古英语与中古英语文学通论");
+        searchResult.setPublisher("商务印书馆");
+        searchResult.setPubTime(2007);
         Double[] results = douban.requestDouban(searchResult);
+        System.out.println(results);
     }
 }

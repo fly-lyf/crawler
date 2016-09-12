@@ -31,10 +31,12 @@ public class DangdangSpider {
 
     //返回评论数
     public Integer getCommentsByParams(SearchResult searchResult) throws Exception {
+        System.out.println("--------------开始------------------");
         System.out.println("书名：" + searchResult.getTitle() + "   作者：" + searchResult.getAuthor() + "    出版社：" + searchResult.getPublisher());
         Integer result = null;
         int ddSale = 0;
         String title = searchResult.getTitle();
+        String author = searchResult.getAuthor();
         //截取冒号，破折号之前的书名
         if (title.indexOf(":") != -1) {
             title = title.substring(0, title.indexOf(":"));
@@ -49,7 +51,12 @@ public class DangdangSpider {
         } else if (title.indexOf("、") != -1) {
             title = title.substring(0, title.indexOf("、"));
         }
-        String url = "http://search.dangdang.com/?key=" + URLEncoder.encode(title, "utf-8") + "+" + URLEncoder.encode(searchResult.getAuthor(), "utf-8") + "&ddSale=1";
+        if (author.indexOf("•") != -1) {
+            author = author.substring(0, author.indexOf("•"));
+        } else if (author.indexOf("·") != -1) {
+            author = author.substring(0, author.indexOf("·"));
+        }
+        String url = "http://search.dangdang.com/?key=" + URLEncoder.encode(title, "utf-8") + "+" + URLEncoder.encode(author, "utf-8") + "&ddSale=1";
         String resText = getEntity(url);
         System.out.println("url: " + url);
         //        System.out.println(resText);
@@ -65,19 +72,20 @@ public class DangdangSpider {
             }
             Element parentLi = titleNodes.get(i).parent().parent();
             Element authorNode = null;
-            Elements ab = parentLi.select("a[name=itemlist-author]");
+            Element publisherNode = null;
             if (parentLi.select("a[name=itemlist-author]").size() > 0) {
                 authorNode = parentLi.select("a[name=itemlist-author]").get(0);
             }
+            if (parentLi.select("a[name=P_cbs]").size() > 0) {
+                publisherNode = parentLi.select("a[name=P_cbs]").get(0);
+            }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
-            Element publisherNode = parentLi.select("a[name=P_cbs]").get(0);
             if (titleNodes.get(i).attr("title").contains(title)) {
-                System.out.println(authorNode.attr("title"));
-                if (authorNode == null || authorNode.attr("title").contains(searchResult.getAuthor())) {
+                if (authorNode == null || authorNode.attr("title").contains(author)) {
                     if (publisherNode == null || publisherNode.attr("title").contains(searchResult.getPublisher())) {
-                        if(authorNode ==null && publisherNode == null){
+                        if (authorNode == null && publisherNode == null) {
                             System.out.println("失败，既没有作者信息，也没有出版社信息");
-                        }else{
+                        } else {
                             System.out.println("-------查询条件：作者+书名，书名匹配成功，作者或出版社至少一个匹配成功-------：");
                             String commentStr = commentNode.text();
                             System.out.println(commentStr);
@@ -97,7 +105,7 @@ public class DangdangSpider {
         System.out.println("url: " + url);
         resText = getEntity(url1);
         Document noOfficeSaleDoc = Jsoup.parse(new URL(url1).openStream(), "gbk", url);
-        titleNodes = noOfficeSaleDoc.select("a[name=itemlist-title] font");
+        titleNodes = noOfficeSaleDoc.select("a[name=itemlist-title]");
         for (int i = 0; i < titleNodes.size(); i++) {
             Element parentLi = titleNodes.get(i).parent().parent();
             Element authorNode = null;
@@ -106,12 +114,7 @@ public class DangdangSpider {
             }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
             if (titleNodes.get(i).attr("title").contains(title)) {
-                if (authorNode == null || authorNode.attr("title").contains(searchResult.getAuthor())) {
-                    if(authorNode == null){
-                        System.out.println("-------查询条件：书名，作者书名匹配成功-------：");
-                    }else {
-                        System.out.println("-------查询条件：书名，只有书名匹配成功，作者匹配失败-------：");
-                    }
+                if (authorNode == null || authorNode.attr("title").contains(author)) {
                     String commentStr = commentNode.text();
                     System.out.println(commentStr);
                     Integer commentCount = Integer.parseInt(commentStr.substring(0, commentStr.indexOf("条")));
@@ -119,10 +122,8 @@ public class DangdangSpider {
                     return result;
                 }
             }
-            System.out.println("------------查询条件：书名，书名匹配失败或作者匹配失败-----------");
         }
-        System.out.println("----彻底失败失败----");
-
+        System.out.println("------------查询条件：书名，书名匹配失败或作者匹配失败-----------");
         return result;
     }
 
@@ -212,7 +213,7 @@ public class DangdangSpider {
 
     public static void main(String[] args) throws Exception {
         DangdangSpider dangdangSpider = new spider.DangdangSpider();
-        SearchResult searchResult = new SearchResult("社区体育服务绩效评价", "陈旸", "北京师范大学出版社", 0, "");
+        SearchResult searchResult = new SearchResult("喀什作家群研究——以艾合买提·孜亚依为个案", "姑丽娜尔·吾甫力", "喀什师范学院", 0, "");
         System.out.println(dangdangSpider.getCommentsByParams(searchResult));
 
     }

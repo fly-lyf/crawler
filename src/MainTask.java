@@ -41,26 +41,26 @@ public class MainTask {
 //        }
 
         //豆瓣
-//        ExcelReader reader = new ExcelReader();
-//        pojo.SearchResult[] searchResults = reader.reader();
-//        Double[] results = null;
-//        for (int i = 0; i < searchResults.length; i++) {
-//            DoubanSpider douban = new DoubanSpider();
-//            results = douban.requestDouban(searchResults[i]);
-//            reader.writeDouBan(searchResults[i], results);
-//            Thread.sleep(3000);
-//        }
-
-        //当当
         ExcelReader reader = new ExcelReader();
-        DangdangSpider dangdangSpider = new DangdangSpider();
-        SearchResult[] searchResults = reader.reader();
-        Integer dangdang;
-        for(int i=0;i<searchResults.length;i++) {
-            dangdang = dangdangSpider.getCommentsByParams(searchResults[i]);
-            reader.writeDangdang(dangdang,searchResults[i]);
+        pojo.SearchResult[] searchResults = reader.reader();
+        Double[] results = null;
+        for (int i = 0; i < searchResults.length; i++) {
+            DoubanSpider douban = new DoubanSpider();
+            results = douban.requestDouban(searchResults[i]);
+            reader.writeDouBan(searchResults[i], results);
             Thread.sleep(3000);
         }
+
+        //当当
+//        ExcelReader reader = new ExcelReader();
+//        DangdangSpider dangdangSpider = new DangdangSpider();
+//        SearchResult[] searchResults = reader.reader();
+//        Integer dangdang;
+//        for(int i=0;i<searchResults.length;i++) {
+//            dangdang = dangdangSpider.getCommentsByParams(searchResults[i]);
+//            reader.writeDangdang(dangdang,searchResults[i]);
+//            Thread.sleep(3000);
+//        }
 
         //亚马逊
 //        ExcelReader reader = new ExcelReader();

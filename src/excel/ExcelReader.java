@@ -219,14 +219,14 @@ public class ExcelReader {
         int rows = ws.getRows();
         Label title = new Label(0, rows, searchResult.getTitle());
         if (result[0] != null) {
-            Number num = new Number(24, rows, result[0].intValue());
-            Number num1 = new Number(25, rows, result[1]);
+            Number num = new Number(5, rows, result[0].intValue());
+            Number num1 = new Number(6, rows, result[1]);
             ws.addCell(title);
             ws.addCell(num);
             ws.addCell(num1);
         } else {
-            Label num = new Label(24, rows, "--");
-            Label num1 = new Label(25, rows, "--");
+            Label num = new Label(5, rows, "--");
+            Label num1 = new Label(6, rows, "--");
             ws.addCell(title);
             ws.addCell(num);
             ws.addCell(num1);
@@ -392,13 +392,13 @@ public class ExcelReader {
         ws.addCell(lab);
         ws.addCell(lab1);
         if (dangdang != null) {
-            Number num = new Number(26, rows, dangdang);
-            Number num1 = new Number(27, rows, 5);
+            Number num = new Number(5, rows, dangdang);
+            Number num1 = new Number(6, rows, 5);
             ws.addCell(num);
             ws.addCell(num1);
         } else {
-            Label num = new Label(26, rows, "--");
-            Label num1 = new Label(27, rows, "--");
+            Label num = new Label(5, rows, "--");
+            Label num1 = new Label(6, rows, "--");
             ws.addCell(num);
             ws.addCell(num1);
         }
