@@ -39,14 +39,16 @@ public class AmazonSpider {
         //截取冒号，破折号之前的书名
         if (searchTitle.indexOf(":") != -1) {
             searchTitle = searchTitle.substring(0, searchTitle.indexOf(":"));
-        } else if (searchTitle.indexOf("—") != -1) {
-            searchTitle = searchTitle.substring(0, searchTitle.indexOf("—"));
+        }
+        if (searchTitle.indexOf("•") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("•"));
+        }
+        if (searchTitle.indexOf("·") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("·"));
         } else if (searchTitle.indexOf("-") != -1) {
             searchTitle = searchTitle.substring(0, searchTitle.indexOf("-"));
-        } else if (searchTitle.indexOf("•") != -1) {
-            searchTitle = searchTitle.substring(0, searchTitle.indexOf("•"));
-        } else if (searchTitle.indexOf("·") != -1) {
-            searchTitle = searchTitle.substring(0, searchTitle.indexOf("·"));
+        } else if (searchTitle.indexOf("—") != -1) {
+            searchTitle = searchTitle.substring(0, searchTitle.indexOf("—"));
         } else if (searchTitle.indexOf("、") != -1) {
             searchTitle = searchTitle.substring(0, searchTitle.indexOf("、"));
         }
@@ -69,38 +71,42 @@ public class AmazonSpider {
         //匹配书名
         Elements bookList = doc.select("li[class=s-result-item celwidget]");
         for (int i = 0; i < bookList.size(); i++) {
+            Element isDigital = bookList.get(i).select("h3[class=a-size-small a-color-null s-inline    a-text-normal]").get(0);
+            if (isDigital.text().contains("电子书")) {
+                continue;
+            }
             Element title = bookList.get(i).select("h2[class=a-size-medium a-color-null s-inline  s-access-title  a-text-normal]").get(0);
             Elements author = bookList.get(i).select("div[class=a-row a-spacing-none] span[class=a-size-small a-color-secondary]");
-            if(title != null && title.attr("data-attribute").indexOf(searchTitle) != -1){
-                    if(author.get(1).text().indexOf(searchAuthor) != -1){
-                        System.out.println("---------匹配成功----------");
-                        Element commentNode = null;
-                        Element countNode = null;
-                        if(bookList.get(i).select("span[class=a-icon-alt]").size() > 0){
-                            commentNode = bookList.get(i).select("span[class=a-icon-alt]").get(0);
-                            Elements test =  bookList.get(i).select("div[class=a-row a-spacing-mini]");
-                            countNode = bookList.get(i).select("div[class=a-row a-spacing-mini]").get(0).select("a[rel=noopener noreferrer]").get(0);
-                        }
-                        if(commentNode != null){
-                            String countStr = countNode.text();
-                            String commentStr = commentNode.text();
-                            result[0] = Double.parseDouble(countStr);
-                            result[1] = Double.parseDouble(commentStr.substring(2, commentStr.indexOf(" 星")));
-                            System.out.println("评价人数：  "+result[0]+"    得分："+result[1]);
-                            return result;
-                        }else {
-                            System.out.println("没有评价信息");
-                            result[0] = null;
-                            result[1] = null;
-                            return result;
-                        }
-                    }else {
-                        System.out.println("----------作者匹配失败--------");
+            if (title != null && title.attr("data-attribute").indexOf(searchTitle) != -1) {
+                if (author.get(1).text().indexOf(searchAuthor) != -1) {
+                    System.out.println("---------匹配成功----------");
+                    Element commentNode = null;
+                    Element countNode = null;
+                    if (bookList.get(i).select("span[class=a-icon-alt]").size() > 0) {
+                        commentNode = bookList.get(i).select("span[class=a-icon-alt]").get(0);
+                        countNode = bookList.get(i).select("div[class=a-row a-spacing-mini]").get(0).select("a[rel=noopener noreferrer]").get(0);
                     }
-            }else {
+                    if (commentNode != null) {
+                        String countStr = countNode.text();
+                        String commentStr = commentNode.text();
+                        result[0] = Double.parseDouble(countStr);
+                        result[1] = Double.parseDouble(commentStr.substring(2, commentStr.indexOf(" 星")));
+                        System.out.println("评价人数：  " + result[0] + "    得分：" + result[1]);
+                        return result;
+                    } else {
+                        System.out.println("没有评价信息");
+                        result[0] = null;
+                        result[1] = null;
+                        return result;
+                    }
+                } else {
+                    System.out.println("----------作者匹配失败--------");
+                }
+            } else {
                 System.out.println("------书名匹配失败------");
             }
         }
+        System.out.println("----------没有结果列表--------");
         result[0] = null;
         result[1] = null;
         return result;
@@ -161,7 +167,7 @@ public class AmazonSpider {
     //单元测试
     public static void main(String[] args) throws IOException {
         AmazonSpider amazonSpider = new AmazonSpider();
-        SearchResult searchResult = new SearchResult("古英语与中古英语文学通论","陈才宇", "", 0, "");
+        SearchResult searchResult = new SearchResult("冷战时期美日关系史研究", "崔丕", "", 2011, "");
         System.out.println(amazonSpider.requestAmazon(searchResult));
 
     }

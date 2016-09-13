@@ -38,13 +38,12 @@ public class CnkiSpider {
         String key1 = param.getTitle();
         String key2 = param.getAuthor();
         String key3 = param.getPublisher();
-        String key4 = null;
+        String key4;
         if (param.getPubTime() != null && flag == 1) {
             key4 = param.getPubTime().toString();
         } else {
             key4 = "";
         }
-//        String year2015 = "&publishdate_from=2015-01-01&publishdate_to=2015-12-31";
         System.out.println("___________________");
         System.out.println("文献名称:" + key1 + "   作者: " + key2 + "   出版社: " + key3 + "   出版时间: " + key4);
 
@@ -446,7 +445,7 @@ public class CnkiSpider {
     //单元测试
     public static void main(String[] args) throws IOException {
         CnkiSpider cnki = new CnkiSpider();
-        SearchResult searchResult = new SearchResult("马克思主义理论与实践:霍布斯鲍姆史学研究","梁民愫","社会科学文献出版社",2009, "江西师范大学");
+        SearchResult searchResult = new SearchResult("中国学术思想史稿","步近智","中国社会科学出版社",2007, "中国社科院历史所");
         String url = cnki.searchKeyword(searchResult,1);
         CnkiResult cnkiResult = cnki.getHtml(url);
         Integer[] citations = cnki.getCitations(searchResult);

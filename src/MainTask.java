@@ -68,9 +68,9 @@ public class MainTask {
 //        Double[] amazon;
 //        for(int i=0;i<searchResults.length;i++) {
 //            spider.AmazonSpider amazonSpider = new spider.AmazonSpider();
-//            amazon = amazonSpider.getParams(searchResults[i]);
-//            reader.writeAmazon(amazon);
-//            Thread.sleep(5000);
+//            amazon = amazonSpider.requestAmazon(searchResults[i]);
+//            reader.writeAmazon(amazon,searchResults[i]);
+//            Thread.sleep(3000);
 //        }
 
 

@@ -32,8 +32,10 @@ public class ExcelReader {
             Cell title = sheet.getCell(0, i);
             Cell author = sheet.getCell(1, i);
             Cell publisher = sheet.getCell(2, i);
-            Cell add = sheet.getCell(4, i);
             Cell pubYear = sheet.getCell(3, i);
+            Cell addr = sheet.getCell(4, i);
+            Cell spareTitle = sheet.getCell(6, i);
+            Cell spareAuthor = sheet.getCell(7, i);
 
             String pubYearNum = pubYear.getContents();
             //处理xxxx年xx月，41122
@@ -58,13 +60,26 @@ public class ExcelReader {
             searchResults[i] = new SearchResult();
             searchResults[i].setTitle(title.getContents());
             searchResults[i].setAuthor(author.getContents());
+
             if (pubYearNum != "" && pubYearNum != null) {
                 searchResults[i].setPubTime(Integer.parseInt(pubYearNum));
             } else {
                 searchResults[i].setPubTime(null);
             }
+
+            if (spareTitle != null && spareTitle.getContents() != "") {
+                searchResults[i].setSpareTitle(spareTitle.getContents());
+            } else {
+                searchResults[i].setSpareTitle(null);
+            }
+
+            if (spareAuthor != null && spareAuthor.getContents() != "") {
+                searchResults[i].setSpareAuthor(spareAuthor.getContents());
+            } else {
+                searchResults[i].setSpareAuthor(null);
+            }
             searchResults[i].setPublisher(publisher.getContents());
-            searchResults[i].setAddress(add.getContents());
+            searchResults[i].setAddress(addr.getContents());
         }
         readwb.close();
         return searchResults;

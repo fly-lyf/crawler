@@ -35,22 +35,34 @@ public class DangdangSpider {
         System.out.println("书名：" + searchResult.getTitle() + "   作者：" + searchResult.getAuthor() + "    出版社：" + searchResult.getPublisher());
         Integer result = null;
         int ddSale = 0;
+        //去空格
         String title = searchResult.getTitle();
         String author = searchResult.getAuthor();
+        while (title.indexOf(" ") != -1) {
+            title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ") + 1, title.length());
+        }
+        //引号改英文
+        title = title.replace("“", "\"");
+        title = title.replace("”", "\"");
         //截取冒号，破折号之前的书名
         if (title.indexOf(":") != -1) {
             title = title.substring(0, title.indexOf(":"));
-        } else if (title.indexOf("—") != -1) {
-            title = title.substring(0, title.indexOf("—"));
-        } else if (title.indexOf("-") != -1) {
-            title = title.substring(0, title.indexOf("-"));
-        } else if (title.indexOf("•") != -1) {
+        }
+        if (title.indexOf("•") != -1) {
             title = title.substring(0, title.indexOf("•"));
-        } else if (title.indexOf("·") != -1) {
+        }
+        if (title.indexOf("——") != -1) {
+            title = title.substring(0, title.indexOf("——"));
+        }
+        if (title.indexOf("--") != -1) {
+            title = title.substring(0, title.indexOf("--"));
+        }
+        if (title.indexOf("·") != -1) {
             title = title.substring(0, title.indexOf("·"));
         } else if (title.indexOf("、") != -1) {
             title = title.substring(0, title.indexOf("、"));
         }
+        //作者截断
         if (author.indexOf("•") != -1) {
             author = author.substring(0, author.indexOf("•"));
         } else if (author.indexOf("·") != -1) {
@@ -80,8 +92,8 @@ public class DangdangSpider {
                 publisherNode = parentLi.select("a[name=P_cbs]").get(0);
             }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
-            if (titleNodes.get(i).attr("title").contains(title)) {
-                if (authorNode == null || authorNode.attr("title").contains(author)) {
+            if (titleNodes.get(i).attr("title").contains(title) || title.contains(titleNodes.get(i).attr("title"))) {
+                if (authorNode == null || authorNode.attr("title").contains(author) || author.contains(authorNode.attr("title"))) {
                     if (publisherNode == null || publisherNode.attr("title").contains(searchResult.getPublisher())) {
                         if (authorNode == null && publisherNode == null) {
                             System.out.println("失败，既没有作者信息，也没有出版社信息");
@@ -113,8 +125,8 @@ public class DangdangSpider {
                 authorNode = parentLi.select("a[name=itemlist-author]").get(0);
             }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
-            if (titleNodes.get(i).attr("title").contains(title)) {
-                if (authorNode == null || authorNode.attr("title").contains(author)) {
+            if (titleNodes.get(i).attr("title").contains(title) || title.contains(titleNodes.get(i).attr("title"))) {
+                if (authorNode == null || authorNode.attr("title").contains(author) || author.contains(authorNode.attr("title"))) {
                     String commentStr = commentNode.text();
                     System.out.println(commentStr);
                     Integer commentCount = Integer.parseInt(commentStr.substring(0, commentStr.indexOf("条")));
@@ -213,7 +225,7 @@ public class DangdangSpider {
 
     public static void main(String[] args) throws Exception {
         DangdangSpider dangdangSpider = new spider.DangdangSpider();
-        SearchResult searchResult = new SearchResult("喀什作家群研究——以艾合买提·孜亚依为个案", "姑丽娜尔·吾甫力", "喀什师范学院", 0, "");
+        SearchResult searchResult = new SearchResult(" 《竹书纪年》考", "程平山", "中华书局", 0, "");
         System.out.println(dangdangSpider.getCommentsByParams(searchResult));
 
     }
