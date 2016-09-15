@@ -26,31 +26,38 @@ import java.util.HashMap;
  */
 public class DoubanSpider {
     String cookieStr;
+    Util util = new Util();
 
     public Double[] requestDouban(SearchResult searchResult) throws IOException {
         Double[] returns = new Double[2];
         Double persons = 0.0;
         Double commentRes = 0.0;
         //格式化查询条件
-        String[] parsedTitleAuthor = formatSearchResult(searchResult);
+        String[] parsedTitleAuthor = util.formatSearchResult(searchResult);
         String searchTitle = parsedTitleAuthor[0];
         String searchAuthor = parsedTitleAuthor[1];
         String searchSpareTitle = parsedTitleAuthor[2];
         String searchSpareAuthor = parsedTitleAuthor[3];
+
+        //备用书名生成
+        searchSpareTitle = util.createSpareTile(searchTitle, searchSpareTitle);
+
         String query = URLEncoder.encode(searchTitle, "utf-8");
         String URL = "https://book.douban.com/subject_search?cat=1001&search_text=" + query;
         //拿到响应
         String resText = getEntity(URL, "www.douban.com");
         System.out.println("---开始----");
-        System.out.println("作者：" + searchAuthor + "   书名:" + searchTitle + "    出版社:" + searchResult.getPublisher() + "    出版时间:" + searchResult.getPubTime());
+        System.out.println("作者：" + searchAuthor + "   备用作者:" + searchAuthor + "   完整书名:" + searchTitle + "   查询用书名:" + searchTitle + "    出版社:" + searchResult.getPublisher() + "    出版时间:" + searchResult.getPubTime());
         Document doc = Jsoup.parse(resText);
         Elements titleNodes = doc.select("h2[class] a");
         for (int i = 0; i < titleNodes.size(); i++) {
             //书名节点
             Element titleNode = titleNodes.get(i);
             String titleNodeStr = titleNode.attr("title");
-            titleNodeStr.replace("“", "\"");
-            titleNodeStr.replace("”", "\"");
+
+            //格式化书名
+            titleNodeStr = util.formatTitleString(titleNodeStr);
+
             // 匹配到书名之后，开始匹配作者，出版社，时间
             // 同时匹配备用书名和正式书名
             String matchedTitle = null;
@@ -67,23 +74,29 @@ public class DoubanSpider {
                 String author = parsedInfos[0];
                 String publisher = parsedInfos[1];
                 Integer publishTime = null;
-                if(parsedInfos[2] != null){
-                   publishTime = Integer.parseInt(parsedInfos[2]);
+                try {
+                    if (parsedInfos[2] != null) {
+                        publishTime = Integer.parseInt(parsedInfos[2]);
+                    }
+                } catch (Exception e) {
+                    System.out.println("----------出版时间解析错误----------");
                 }
+
                 //允许作者、出版时间为空，不为空则应该包含查询条件
-                //同时匹配备用作者和正式作者
+                //匹配正式作者
                 String matchedAuthor = null;
-                if(author == null || author.indexOf(searchAuthor) != -1 || searchAuthor.contains(author)){
+                if (author == null || author.indexOf(searchAuthor) != -1 || searchAuthor.contains(author)) {
                     matchedAuthor = searchAuthor;
                 }
                 //如果查到的作者为空就不需要匹配备用作者了，不为空，则需要。代码逻辑不严密但没有错误
-                if(author == null || (searchSpareAuthor != null && author.indexOf(searchSpareAuthor) != -1)){
+                if(author == null || (searchSpareAuthor != null && !searchSpareAuthor.equals("") && author.indexOf(searchSpareAuthor) != -1)){
                     matchedAuthor = searchSpareAuthor;
                 }
                 //如果查到的作者为空是合法的，查到的作者不为空，matchedAuthor不为空才能放行，因为如果为空的话，说明作者匹配失败了
                 if ((author == null || matchedAuthor != null)
-                        && (publishTime == null || publishTime.equals(searchResult.getPubTime()))) {
-                    System.out.println("匹配成功:" + titleNode.attr("title") + "、" + author + "、" + publishTime + "、" + publisher);
+                        && (publisher == null
+                || (publisher.contains(searchResult.getPublisher()) || searchResult.getPublisher().contains(publisher)))) {
+                    System.out.println("匹配成功:" + titleNode.attr("title") + "、" + author + "、" + publisher);
                     if (author == null && publishTime == null) {
                         System.out.println("------------[失败]作者和出版社都没有获取到，待确认-----------------");
                     }
@@ -96,9 +109,10 @@ public class DoubanSpider {
                     if (author != null && matchedAuthor != null && author.indexOf(matchedAuthor) == -1) {
                         System.out.println("-----------------作者匹配失败：" + author);
                     }
-                    if (publishTime != null && !publishTime.equals(searchResult.getPubTime())) {
+                    if (publisher != null && !(publisher.contains(searchResult.getPublisher()) || searchResult.getPublisher().contains(publisher))) {
                         System.out.println("-----------------出版社匹配失败：" + publisher);
                     }
+
                 }
             }
         }
@@ -136,7 +150,7 @@ public class DoubanSpider {
         HttpResponse response = null;
         HttpEntity entity = null;
         httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.93 Safari/537.36");
+        httpGet.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.89 Safari/537.36");
         httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8");
         httpGet.setHeader("Cookie", cookieStr);
         httpGet.setHeader("Host", host);
@@ -161,81 +175,6 @@ public class DoubanSpider {
         return resText;
     }
 
-    //豆瓣查询条件格式化——处理空格等各种标点符号
-    public String[] formatSearchResult(SearchResult searchResult) {
-        //去空格
-        String title = searchResult.getTitle();
-        String author = searchResult.getAuthor();
-        String spareTitle = searchResult.getSpareTitle();
-        String spareAuthor = searchResult.getSpareAuthor();
-        while (title.indexOf(" ") != -1) {
-            title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ") + 1, title.length());
-        }
-        //引号改英文
-        title = title.replace("“", "\"");
-        title = title.replace("”", "\"");
-        //截取冒号，破折号之前的书名
-        if (title.indexOf(":") != -1) {
-            title = title.substring(0, title.indexOf(":"));
-        }
-        if (title.indexOf("•") != -1) {
-            title = title.substring(0, title.indexOf("•"));
-        }
-        if (title.indexOf("——") != -1) {
-            title = title.substring(0, title.indexOf("——"));
-        }
-        if (title.indexOf("--") != -1) {
-            title = title.substring(0, title.indexOf("--"));
-        }
-        if (title.indexOf("·") != -1) {
-            title = title.substring(0, title.indexOf("·"));
-        } else if (title.indexOf("、") != -1) {
-            title = title.substring(0, title.indexOf("、"));
-        }
-        //作者截断
-        if (author.indexOf("•") != -1) {
-            author = author.substring(0, author.indexOf("•"));
-        } else if (author.indexOf("·") != -1) {
-            author = author.substring(0, author.indexOf("·"));
-        }
-        //备用书名处理
-        if (spareTitle != null) {
-            while (spareTitle.indexOf(" ") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf(" ")) + spareTitle.substring(spareTitle.indexOf(" ") + 1, spareTitle.length());
-            }
-            //引号改英文
-            spareTitle = spareTitle.replace("“", "\"");
-            spareTitle = spareTitle.replace("”", "\"");
-            //截取冒号，破折号之前的书名
-            if (spareTitle.indexOf(":") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf(":"));
-            }
-            if (spareTitle.indexOf("•") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf("•"));
-            }
-            if (spareTitle.indexOf("——") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf("——"));
-            }
-            if (spareTitle.indexOf("--") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf("--"));
-            }
-            if (spareTitle.indexOf("·") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf("·"));
-            } else if (spareTitle.indexOf("、") != -1) {
-                spareTitle = spareTitle.substring(0, spareTitle.indexOf("、"));
-            }
-        }
-        if (spareAuthor != null) {
-            //备用作者截断
-            if (spareAuthor.indexOf("•") != -1) {
-                spareAuthor = spareAuthor.substring(0, spareAuthor.indexOf("•"));
-            } else if (spareAuthor.indexOf("·") != -1) {
-                spareAuthor = spareAuthor.substring(0, spareAuthor.indexOf("·"));
-            }
-        }
-        String[] results = new String[]{title, author, spareTitle, spareAuthor};
-        return results;
-    }
 
     //豆瓣文档解析——分解爬取到的作者、出版社、时间等信息
     public String[] getInfos(String[] infos) {
@@ -243,73 +182,88 @@ public class DoubanSpider {
         String publisher = null;
         String publishTime = null;
         // 有译者的，xls中的负责人都是译者
-        // 作者、出版时间、价格或者作者、译者、价格（这种只能手动处理了）
+        // 作者、出版时间、价格
+        // 作者、译者、价格
         if (infos.length == 3) {
             try {
-                if (infos[0].contains("印书馆") || infos[0].contains("书局") || infos[0].contains("出版社")) {
+
+                if (isPublisher(infos[0])) {
                     publisher = infos[0];
-                } else if (infos[0].contains("-") && (infos[0].contains("19") || infos[0].contains("20"))) {
+                } else if (isPubTime(infos[0])) {
                     publishTime = infos[0].substring(0, 4);
                 } else {
                     author = infos[0];
                 }
-                if (infos[1].contains("印书馆") || infos[1].contains("书局") || infos[1].contains("出版社")) {
+
+                if (isPublisher(infos[1])) {
                     publisher = infos[1];
-                } else if (infos[1].contains("-") && (infos[0].contains("19") || infos[0].contains("20"))) {
+                } else if (isPubTime(infos[1])) {
                     publishTime = infos[1].substring(0, 4);
-                } else {
+                }else {
                     author = infos[1];
                 }
-                if(publishTime == null && infos[2].contains("-")){
+
+
+                if (publishTime == null && isPubTime(infos[2])) {
                     publishTime = infos[2].substring(0, 4);
                 }
+
             } catch (NumberFormatException e) {
                 System.out.println("-----------------线上的出版社、出版时间格式匹配失败,格式解析错误:");
                 for (int j = 0; j < infos.length; j++) {
                     String info = infos[j];
                     System.out.print(info);
                 }
-                System.out.println();
             }
-            //作者、出版社、出版时间、价格或作者、译者、出版时间、价格或作者、译者、出版社、出版时间（这种只能手动处理了）
+            //作者、出版社、出版时间、价格
+            //作者、译者、出版时间、价格
+            // 作者、译者、出版社、出版时间
+            //等
         } else if (infos.length == 4) {
             try {
                 author = infos[0];
-                if (infos[1].contains("印书馆") || infos[1].contains("书局") || infos[1].contains("出版社")) {
+
+                if (isPublisher(infos[1])) {
                     publisher = infos[1];
-                } else {
+                }  else {
                     author = infos[1];
                 }
-                if (infos[2].contains("印书馆") || infos[2].contains("书局") || infos[2].contains("出版社")) {
+
+                if (isPublisher(infos[2])) {
                     publisher = infos[2];
-                } else {
+                } else if (isPubTime(infos[2])) {
                     publishTime = infos[2].substring(0, 4);
                 }
-                if(publishTime == null && infos[3].contains("-") && (infos[0].contains("19") || infos[0].contains("20"))){
+
+                if (publishTime == null && isPubTime(infos[3])) {
                     publishTime = infos[3].substring(0, 4);
                 }
             } catch (NumberFormatException e) {
-                System.out.println("-----------------线上的出版社、出版时间格式匹配失败,格式解析错误");
+                System.out.println("------线上的出版社、出版时间格式匹配失败,格式解析错误-------");
                 for (int j = 0; j < infos.length; j++) {
                     String info = infos[j];
                     System.out.print(info);
                 }
-                System.out.println();
             }
-            //出版时间和价格，作者和出版社，时间和出版社，时间和价格等等各种
+            //出版时间和价格
+            // 作者和出版社
+            // 时间和出版社
+            // 时间和价格
+            // 等
             //作者不可能在第二个位置，价格应该也不会在第一个位置
         } else if (infos.length == 2) {
             try {
-                if (infos[0].contains("印书馆") || infos[0].contains("书局") || infos[0].contains("出版社")) {
+                if (isPublisher(infos[0])) {
                     publisher = infos[0];
-                } else if (infos[1].contains("-") && (infos[0].contains("19") || infos[0].contains("20"))) {
+                } else if (isPubTime(infos[0])) {
                     publishTime = infos[0].substring(0, 4);
                 } else {
                     author = infos[0];
                 }
-                if (infos[1].contains("印书馆") || infos[1].contains("书局") || infos[1].contains("出版社")) {
+
+                if (isPublisher(infos[1])) {
                     publisher = infos[1];
-                } else if (infos[1].contains("-") && (infos[0].contains("19") || infos[0].contains("20"))) {
+                } else if (isPubTime(infos[1])) {
                     publishTime = infos[1].substring(0, 4);
                 }
             } catch (NumberFormatException e) {
@@ -334,6 +288,18 @@ public class DoubanSpider {
         }
         String[] results = new String[]{author, publisher, publishTime};
         return results;
+    }
+
+    //豆瓣文档解析——是否是出版社
+    public boolean isPublisher(String info){
+        boolean isPublisher = info.contains("印书馆") || info.contains("书店") || info.contains("书局") || info.contains("出版社") || info.contains("人民文学")|| info.contains("社科") || info.contains("大学");
+        return isPublisher;
+    }
+
+    //豆瓣文档解析——是否是出版时间
+    public boolean isPubTime(String info){
+        boolean isPubTime = (info.contains("年") || info.contains("-")) && (info.contains("19") || info.contains("20"));
+        return isPubTime;
     }
 
     //豆瓣评论数据解析——拉取评论数和评论人数
@@ -376,12 +342,13 @@ public class DoubanSpider {
     public static void main(String[] args) throws IOException {
         DoubanSpider douban = new DoubanSpider();
         SearchResult searchResult = new SearchResult();
-        searchResult.setAuthor("赵季");
-        searchResult.setSpareAuthor("");
-        searchResult.setSpareTitle("《箕雅》五百诗人本事辑考");
-        searchResult.setTitle("箕雅五百诗人本事辑考");
-        searchResult.setPublisher("人民文学出版社");
-        searchResult.setPubTime(2013);
+
+        searchResult.setTitle("苏联共产党基层党组织建设研究");
+        searchResult.setAuthor("李燕");
+        searchResult.setPublisher("社会科学文献出版社");
+        searchResult.setPubTime(2015);
+        searchResult.setSpareAuthor("青史");
+        searchResult.setSpareTitle("");
         Double[] results = douban.requestDouban(searchResult);
         System.out.println(results);
     }

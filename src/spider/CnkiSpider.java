@@ -90,7 +90,7 @@ public class CnkiSpider {
     }
 
     //总结果数、论文类型，论文链接
-    public CnkiResult getHtml(String url) throws IOException {
+    public CnkiResult getTotalNum(String url) throws IOException {
         CnkiResult cnkiResult = new CnkiResult();
         String resText = getEntity(url);
 
@@ -100,11 +100,12 @@ public class CnkiSpider {
         if (matcherCount.find()) {
             String countCount = matcherCount.group().substring(8, matcherCount.group().indexOf("&", 8));
             countCount = countCount.replaceAll(",", "");
-            System.out.print("总结果数：" + countCount);
+            System.out.println("总结果数：" + countCount);
             cnkiResult.setCount(countCount);
         }
 
         //论文类型
+
         Pattern patternDB = Pattern.compile("<td(\\s*)class=\"tdrigtxt\">([^\\<]*[辑刊期刊博士硕士会议][^\\<]*)*</td>");
         Matcher matcherDB = patternDB.matcher(resText);
         List<String> DBList = new ArrayList<String>();
@@ -394,6 +395,11 @@ public class CnkiSpider {
         return result;
     }
 
+    public Integer[] getPaperTypes(String url, SearchResult param){
+        Integer[] result = new Integer[4];
+        return result;
+    }
+
     //拉取报纸评论并提取数量
     public String searchPaper(String key) throws IOException {
         String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_value1=%E5%85%89%E6%98%8E%E6%97%A5%E6%8A%A5%2B%E6%96%B0%E5%8D%8E%E6%AF%8F%E6%97%A5%E7%94%B5%E8%AE%AF%2B%E6%96%87%E6%B1%87%E6%8A%A5%2B%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E7%A7%91%E5%AD%A6%E6%8A%A5&magazine_special1=%3D&txt_1_sel=SU&txt_1_value1=" + URLEncoder.encode(key, "utf-8") + "&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Tue%20Sep%2015%202015%2020%3A59%3A58%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
@@ -447,7 +453,7 @@ public class CnkiSpider {
         CnkiSpider cnki = new CnkiSpider();
         SearchResult searchResult = new SearchResult("中国学术思想史稿","步近智","中国社会科学出版社",2007, "中国社科院历史所");
         String url = cnki.searchKeyword(searchResult,1);
-        CnkiResult cnkiResult = cnki.getHtml(url);
+        CnkiResult cnkiResult = cnki.getTotalNum(url);
         Integer[] citations = cnki.getCitations(searchResult);
         cnkiResult.setCitation(citations);
         Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResult);

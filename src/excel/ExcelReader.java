@@ -19,11 +19,10 @@ public class ExcelReader {
 
     private int rows;
 
-    public SearchResult[] reader() throws Exception {
+    public SearchResult[] reader(String path) throws Exception {
         //cnki的读取
         //新建workbook
-        InputStream instream = new FileInputStream("resources/source-init.xls");
-//        InputStream instream = new FileInputStream("resources/source-init-part.xls");
+        InputStream instream = new FileInputStream(path);
         Workbook readwb = Workbook.getWorkbook(instream);
         //读表
         Sheet sheet = readwb.getSheet(0);
@@ -47,6 +46,9 @@ public class ExcelReader {
             }
             if (pubYearNum.contains("-")) {
                 pubYearNum = "20" + pubYearNum.substring(0, 2);
+            }
+            if (pubYearNum.contains("/")) {
+                pubYearNum = pubYearNum.substring(0, 4);
             }
 
 //            Cell recYear = sheet.getCell(9, i);

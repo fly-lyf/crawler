@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
  */
 public class DangdangSpider {
     String cookieStr;
+    private Util util = new Util();
 
     //返回评论数
     public Integer getCommentsByParams(SearchResult searchResult) throws Exception {
@@ -38,36 +39,18 @@ public class DangdangSpider {
         //去空格
         String title = searchResult.getTitle();
         String author = searchResult.getAuthor();
-        while (title.indexOf(" ") != -1) {
-            title = title.substring(0, title.indexOf(" ")) + title.substring(title.indexOf(" ") + 1, title.length());
-        }
+
         //引号改英文
-        title = title.replace("“", "\"");
-        title = title.replace("”", "\"");
-        //截取冒号，破折号之前的书名
-        if (title.indexOf(":") != -1) {
-            title = title.substring(0, title.indexOf(":"));
-        }
-        if (title.indexOf("•") != -1) {
-            title = title.substring(0, title.indexOf("•"));
-        }
-        if (title.indexOf("——") != -1) {
-            title = title.substring(0, title.indexOf("——"));
-        }
-        if (title.indexOf("--") != -1) {
-            title = title.substring(0, title.indexOf("--"));
-        }
-        if (title.indexOf("·") != -1) {
-            title = title.substring(0, title.indexOf("·"));
-        } else if (title.indexOf("、") != -1) {
-            title = title.substring(0, title.indexOf("、"));
-        }
-        //作者截断
-        if (author.indexOf("•") != -1) {
-            author = author.substring(0, author.indexOf("•"));
-        } else if (author.indexOf("·") != -1) {
-            author = author.substring(0, author.indexOf("·"));
-        }
+        title = util.formatTitleString(title);
+        //格式化查询条件
+        String[] parsedTitleAuthor = util.formatSearchResult(searchResult);
+        String searchTitle = parsedTitleAuthor[0];
+        String searchAuthor = parsedTitleAuthor[1];
+        String searchSpareTitle = parsedTitleAuthor[2];
+        String searchSpareAuthor = parsedTitleAuthor[3];
+        //备用书名生成
+        searchSpareTitle = util.createSpareTile(searchTitle, searchSpareTitle);
+
         String url = "http://search.dangdang.com/?key=" + URLEncoder.encode(title, "utf-8") + "+" + URLEncoder.encode(author, "utf-8") + "&ddSale=1";
         String resText = getEntity(url);
         System.out.println("url: " + url);
@@ -92,7 +75,9 @@ public class DangdangSpider {
                 publisherNode = parentLi.select("a[name=P_cbs]").get(0);
             }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
-            if (titleNodes.get(i).attr("title").contains(title) || title.contains(titleNodes.get(i).attr("title"))) {
+            String titleNodeStr = titleNodes.get(i).attr("title");
+            titleNodeStr = util.formatTitleString(titleNodeStr);
+            if (titleNodeStr.contains(title) || title.contains(titleNodeStr)) {
                 if (authorNode == null || authorNode.attr("title").contains(author) || author.contains(authorNode.attr("title"))) {
                     if (publisherNode == null || publisherNode.attr("title").contains(searchResult.getPublisher())) {
                         if (authorNode == null && publisherNode == null) {
@@ -125,7 +110,9 @@ public class DangdangSpider {
                 authorNode = parentLi.select("a[name=itemlist-author]").get(0);
             }
             Element commentNode = parentLi.select("a[name=itemlist-review]").get(0);
-            if (titleNodes.get(i).attr("title").contains(title) || title.contains(titleNodes.get(i).attr("title"))) {
+            String titleNodeStr = titleNodes.get(i).attr("title");
+            titleNodeStr = util.formatTitleString(titleNodeStr);
+            if (titleNodeStr.contains(title) || title.contains(titleNodeStr)) {
                 if (authorNode == null || authorNode.attr("title").contains(author) || author.contains(authorNode.attr("title"))) {
                     String commentStr = commentNode.text();
                     System.out.println(commentStr);
@@ -225,7 +212,7 @@ public class DangdangSpider {
 
     public static void main(String[] args) throws Exception {
         DangdangSpider dangdangSpider = new spider.DangdangSpider();
-        SearchResult searchResult = new SearchResult(" 《竹书纪年》考", "程平山", "中华书局", 0, "");
+        SearchResult searchResult = new SearchResult("文学文本解读学", "孙绍振", "北京大学出版社", 0, "");
         System.out.println(dangdangSpider.getCommentsByParams(searchResult));
 
     }
