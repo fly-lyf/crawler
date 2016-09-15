@@ -20,7 +20,7 @@ public class MainTask {
 //            CnkiResult citation;
 //            //无出版年
 ////            String url = cnki.searchKeyword(searchResults[i],1);
-////            cnkiResult = cnki.getHtml(url);
+////            cnkiResult = cnki.getTotalNum(url);
 ////            Integer[] citations = cnki.getCitations(searchResults[i]);
 ////            cnkiResult.setCitation(citations);
 ////            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult.getUrl(), searchResults[i]);
@@ -28,7 +28,7 @@ public class MainTask {
 ////            cnkiResult.setSelfAddCitation(selfCitations[1]);
 //            //有出版年
 //            String url1 = cnki.searchKeyword(searchResults[i], 1);
-//            cnkiResult1 = cnki.getHtml(url1);
+//            cnkiResult1 = cnki.getTotalNum(url1);
 //            Integer[] citations = cnki.getCitations(searchResults[i]);
 //            cnkiResult1.setCitation(citations);
 //            Integer[] selfCitations = cnki.getSelfCitation(cnkiResult1.getUrl(), searchResults[i]);
@@ -39,40 +39,6 @@ public class MainTask {
 //            reader.writeCNKI(cnkiResult1, searchResults[i], 1);
 //            Thread.sleep(4000);
 //        }
-
-        //豆瓣
-        ExcelReader reader = new ExcelReader();
-        pojo.SearchResult[] searchResults = reader.reader();
-        Double[] results = null;
-        for (int i = 0; i < searchResults.length; i++) {
-            DoubanSpider douban = new DoubanSpider();
-            results = douban.requestDouban(searchResults[i]);
-            reader.writeDouBan(searchResults[i], results);
-            Thread.sleep(3000);
-        }
-
-        //当当
-//        ExcelReader reader = new ExcelReader();
-//        DangdangSpider dangdangSpider = new DangdangSpider();
-//        SearchResult[] searchResults = reader.reader();
-//        Integer dangdang;
-//        for(int i=0;i<searchResults.length;i++) {
-//            dangdang = dangdangSpider.getCommentsByParams(searchResults[i]);
-//            reader.writeDangdang(dangdang,searchResults[i]);
-//            Thread.sleep(3000);
-//        }
-
-        //亚马逊
-//        ExcelReader reader = new ExcelReader();
-//        SearchResult[] searchResults = reader.reader();
-//        Double[] amazon;
-//        for(int i=0;i<searchResults.length;i++) {
-//            spider.AmazonSpider amazonSpider = new spider.AmazonSpider();
-//            amazon = amazonSpider.requestAmazon(searchResults[i]);
-//            reader.writeAmazon(amazon,searchResults[i]);
-//            Thread.sleep(3000);
-//        }
-
 
         //cnki数据去重
 //        DuplicateCNKI duplicateCNKI = new DuplicateCNKI();
