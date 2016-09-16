@@ -11,16 +11,56 @@ import pojo.GTResult;
 import pojo.SearchResult;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by Administrator on 2015/8/29.
  */
-public class ExcelReader {
+public class ExcelProcess {
 
-    private int rows;
+    public enum CellName{
+        title(0),
+        author(1),
+        publisher(2),
+        pubTime(3),
+        cit2016(4),
+        cit2015(5),
+        cit2014(6),
+        cit2013(7),
+        cit2012(8),
+        cit2011(9),
+        cit2010(10),
+        cit2009(11),
+        cit2008(12),
+        cit2007(13),
+        leftTotal(14),
+        crawledTotal(15),
+        rightTotal(16),
+        magazine(17),
+        master(18),
+        doctor(19),
+        conference(20),
+        authorSelf(21),
+        instituteSelf(22);
 
+        private int code;
+
+        CellName(int i) {
+            this.code = i;
+        }
+    }
+
+
+    /**
+     * 通用读取方法
+     *
+     * @param path
+     * @return
+     * @throws Exception
+     */
     public SearchResult[] reader(String path) throws Exception {
-        //cnki的读取
         //新建workbook
         InputStream instream = new FileInputStream(path);
         Workbook readwb = Workbook.getWorkbook(instream);
@@ -88,187 +128,28 @@ public class ExcelReader {
     }
 
     /**
-     * flag 表示是否加入出版年的查询条件
+     * cnki写入
      *
+     * @param cnkiResult
      * @param searchParam
-     * @param flag
      * @throws Exception
      */
-    public void writer(SearchResult searchParam, int flag) throws Exception {
-        // 这个参数决定有没有recTime和pubTime
-        int paramCount = 5;
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
-        WritableSheet ws = wwb.getSheet(0);
-        int rows = ws.getRows();
-//        System.out.println("行数：" + rows);
-        //写参数
-        for (int i = 0; i < 3; i++) {
-            WritableCell wc = ws.getWritableCell(rows, i);
-            String content = "";
-            if (i == 0) {
-                content = searchParam.getTitle();
-            }
-            if (i == 1) {
-                content = searchParam.getAuthor();
-            }
-            if (i == 2) {
-                content = searchParam.getPublisher();
-            }
-            Label label = new Label(i, rows, content);
-            ws.addCell(label);
-        }
-        for (int i = 3; i < 4; i++) {
-            Number label = null;
-            if (searchParam.getPubTime() != null && flag == 1) {
-                Integer content = searchParam.getPubTime();
-                label = new Number(3, rows, content);
-                ws.addCell(label);
-            }
-        }
-        //写结果
-        Integer[] years = searchParam.getYearResult();
-        Integer[] counts = searchParam.getCountResult();
-        int tpc = 4;
-        if (years.length > 0) {
-            tpc = 4 + (2015 - years[0]);
-        }
-        for (int i = 0; i < searchParam.getYearResult().length; i++) {
-            Number num = new Number(i + tpc, rows, counts[i]);
-            ws.addCell(num);
-        }
-        wwb.write();
-        wwb.close();
-        rwb.close();
-    }
+    public void writeCNKI(CnkiResult cnkiResult, SearchResult searchParam) throws Exception {
 
-    public void writeLiXiang(Integer[] result) throws Exception {
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
-        WritableSheet ws = wwb.getSheet(0);
-        int rows = 2;
-        for (int i = 1; i <= result.length; i++) {
-            WritableCell wc = ws.getWritableCell(rows, 17);
-            Number num = new Number(17, rows, result[i - 1]);
-            rows += 2;
-            ws.addCell(num);
-        }
-        wwb.write();
-        wwb.close();
-        rwb.close();
-    }
-
-    public Integer[] readLiXiang() throws Exception {
-        InputStream instream = new FileInputStream("F:\\资料\\后期出版书目名单-2015.5.28.xls");
-        Workbook readwb = Workbook.getWorkbook(instream);
-        Sheet sheet = readwb.getSheet(0);
-        System.out.println(sheet.getRows());
-        Integer[] results = new Integer[(sheet.getRows() - 2)];
-        for (int i = 2; i < sheet.getRows(); i++) {
-            Cell liXiang = sheet.getCell(1, i);
-            String time = liXiang.getContents();
-            if (time.length() >= 3) {
-                time = time.substring(0, 2);
-                time = "20" + time;
-                Integer number = Integer.parseInt(time);
-                results[i - 2] = number;
-                System.out.println(results[i - 2]);
-            }
-        }
-        return results;
-    }
-
-    public SearchResult[] readOthers() throws Exception {
-
-        //cnki的读取
-        //新建workbook
-        InputStream instream = new FileInputStream("F:\\资料\\source-init-其他网站.xls");
-        Workbook readwb = Workbook.getWorkbook(instream);
-        //读表
-        Sheet sheet = readwb.getSheet(0);
-        SearchResult[] searchResults = new SearchResult[sheet.getRows()];
-        for (int i = 0; i < sheet.getRows(); i++) {
-            Cell title = sheet.getCell(0, i);
-            Cell author = sheet.getCell(1, i);
-            Cell publisher = sheet.getCell(2, i);
-            Cell add = sheet.getCell(4, i);
-            Cell pubYear = sheet.getCell(3, i);
-
-            String pubYearNum = pubYear.getContents();
-            if (pubYearNum.contains("月") || pubYearNum.contains("无") || pubYearNum.contains(".")) {
-                pubYearNum = pubYearNum.substring(pubYearNum.indexOf("20"), pubYearNum.indexOf("20") + 4);
-            }
-//
-            if (pubYearNum.contains("40") || pubYearNum.contains("41") || pubYearNum.contains("42") || pubYearNum.contains("39")) {
-                pubYearNum = "" + (Integer.parseInt(pubYearNum) / 365 + 1900);
-            }
-            if (pubYearNum.contains("-")) {
-                pubYearNum = "20" + pubYearNum.substring(0, 2);
-            }
-
-//                Cell recYear = sheet.getCell(9, i);
-//                String recYearNum = recYear.getContents();
-//                if(recYearNum.contains("月") || recYearNum.contains("无") || recYearNum.contains(".")){
-//                    recYearNum = recYearNum.substring(recYearNum.indexOf("20"),recYearNum.indexOf("20")+4);
-//                }
-//                if(recYearNum.contains("40") || recYearNum.contains("41") || recYearNum.contains("42") || recYearNum.contains("39")){
-//                    recYearNum = ""+(Integer.parseInt(recYearNum)/365 +1900);
-//                }
-            searchResults[i] = new SearchResult();
-            searchResults[i].setTitle(title.getContents());
-            searchResults[i].setAuthor(author.getContents());
-            if (pubYearNum != "" && pubYearNum != null) {
-                searchResults[i].setPubTime(Integer.parseInt(pubYearNum));
-            } else {
-                searchResults[i].setPubTime(null);
-            }
-            searchResults[i].setPublisher(publisher.getContents());
-            searchResults[i].setAddress(add.getContents());
-        }
-        readwb.close();
-        return searchResults;
-    }
-
-    public void writeDouBan(SearchResult searchResult, Double[] result) throws Exception {
-        Workbook rwb = Workbook.getWorkbook(new File("resources/douban-result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/douban-result.xls"), rwb);//copy
-        WritableSheet ws = wwb.getSheet(0);
-        int rows = ws.getRows();
-        Label title = new Label(0, rows, searchResult.getTitle());
-        if (result[0] != null) {
-            Number num = new Number(5, rows, result[0].intValue());
-            Number num1 = new Number(6, rows, result[1]);
-            ws.addCell(title);
-            ws.addCell(num);
-            ws.addCell(num1);
-        } else {
-            Label num = new Label(5, rows, "--");
-            Label num1 = new Label(6, rows, "--");
-            ws.addCell(title);
-            ws.addCell(num);
-            ws.addCell(num1);
-        }
-        wwb.write();
-        wwb.close();
-        rwb.close();
-    }
-
-    public void writeCNKI(CnkiResult cnkiResult, SearchResult searchParam, int flag) throws Exception {
-
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        Workbook rwb = Workbook.getWorkbook(new File("resources/cnki-result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/cnki-result.xls"), rwb);//copy
         WritableSheet ws = wwb.getSheet(0);
         int rows = ws.getRows();
         //写参数
         for (int i = 0; i < 3; i++) {
             String content = "";
-            if (i == 0) {
+            if (i == CellName.title.ordinal()) {
                 content = searchParam.getTitle();
             }
-            if (i == 1) {
+            if (i == CellName.author.ordinal()) {
                 content = searchParam.getAuthor();
             }
-            if (i == 2) {
+            if (i == CellName.publisher.ordinal()) {
                 content = searchParam.getPublisher();
             }
             Label label = new Label(i, rows, content);
@@ -276,9 +157,9 @@ public class ExcelReader {
         }
 
         //出版年
-        if (flag == 1 && searchParam.getPubTime() != null) {
+        if (searchParam.getPubTime() != null) {
             Integer content = searchParam.getPubTime();
-            Number number = new Number(3, rows, content);
+            Number number = new Number(CellName.pubTime.ordinal(), rows, content);
             ws.addCell(number);
         }
 
@@ -286,97 +167,60 @@ public class ExcelReader {
         if (cnkiResult.getCount() != null) {
             Integer count = Integer.parseInt(cnkiResult.getCount());
             WritableCell wc = ws.getWritableCell(rows, 4);
-            Number num = new Number(15, rows, count);
+            Number num = new Number(CellName.crawledTotal.ordinal(), rows, count);
             ws.addCell(num);
         }
 
         //类型数
-        Integer mst = 0;
-        Integer dct = 0;
-        Integer mag = 0;
-        Integer conf = 0;
-        if (cnkiResult.getType().length > 0) {
-            for (String a : cnkiResult.getType()) {
-                if (a.equals("博士")) {
-                    dct++;
-                }
-                if (a.equals("硕士")) {
-                    mst++;
-                }
-                if (a.equals("中国") || a.equals("国际")) {
-                    conf++;
-                }
-                if (a.contains("期刊")) {
-                    mag++;
-                }
-            }
-        }
-        Number num1 = new Number(18, rows, dct);
-        Number num2 = new Number(17, rows, mst);
-        Number num3 = new Number(19, rows, conf);
-        Number num4 = new Number(16, rows, mag);
+        Integer mst = cnkiResult.getType().get("master");
+        Integer dct = cnkiResult.getType().get("doctor");
+        Integer mag = cnkiResult.getType().get("magazine");
+        Integer conf = cnkiResult.getType().get("conference");
+        Number num4 = new Number(CellName.magazine.ordinal(), rows, mag);
+        Number num2 = new Number(CellName.master.ordinal(), rows, mst);
+        Number num1 = new Number(CellName.doctor.ordinal(), rows, dct);
+        Number num3 = new Number(CellName.conference.ordinal(), rows, conf);
         ws.addCell(num1);
         ws.addCell(num2);
         ws.addCell(num3);
         ws.addCell(num4);
+        //右被引总数
+        Number rightTotal = new Number(CellName.rightTotal.ordinal(), rows, mag+dct+mst+conf);
+        ws.addCell(rightTotal);
         //自引数
         Integer selfCitation = cnkiResult.getSelfCitation();
-        Integer selfAddCitation = cnkiResult.getSelfAddCitation();
-        Number citation1 = new Number(20, rows, selfCitation);
-        Number citation2 = new Number(21, rows, selfAddCitation);
+        Integer selfInstituteCitation = cnkiResult.getSelfInstituteCitation();
+        Number citation1 = new Number(CellName.authorSelf.ordinal(), rows, selfCitation);
+        Number citation2 = new Number(CellName.instituteSelf.ordinal(), rows, selfInstituteCitation);
         ws.addCell(citation1);
         ws.addCell(citation2);
 
         //按年度引用数
-//        Integer[] yearCitation = cnkiResult.getCitation();
-//        int length = yearCitation.length;
-//        if ((2016 - yearCitation[0]) == 0) {
-//            for (int i = 0; i < yearCitation.length - 1; i++) {
-//                if (yearCitation[i+1]==null)
-//                {break;}
-//                Number yearCit = new Number(4 + i, rows, yearCitation[i + 1]);
-//                ws.addCell(yearCit);
-//            }
-//        } else {
-//            for (int i = 0; i < (2016 - yearCitation[0]); i++) {
-//                if (yearCitation[i]==null)
-//                {break;}
-//                Number yearCit0 = new Number(4 + i, rows, 0);
-//                ws.addCell(yearCit0);
-//            }
-//            for (int i = 0; i < yearCitation.length - 1; i++) {
-//                if (yearCitation[i+1]==null){
-//                    break;
-//                }
-//                Number yearCit = new Number((2016 - yearCitation[0]) + 4 + i, rows, yearCitation[i + 1]);
-//                ws.addCell(yearCit);
-//            }
-//
-//        }
-        Integer[] yearCitation = cnkiResult.getCitation();
-        for(int i=0;i<yearCitation.length;i++)
-        {
-            if (yearCitation[i]==null){
-                    break;
-                }
-                Number yearCit = new Number(4+i, rows, yearCitation[i]);
-                ws.addCell(yearCit);
+        HashMap<String, Integer> yearCitation = cnkiResult.getCitation();
+        int total = 0;
+        for (Iterator iterator = yearCitation.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, Integer> it = (Map.Entry<String, Integer>) iterator.next();
+            Integer year = Integer.parseInt(it.getKey());
+            Integer count = it.getValue();
+            total += count;
+            Number yearCit = new Number(CellName.cit2016.ordinal() + 2016 - year, rows, count);
+            ws.addCell(yearCit);
         }
-        int totleYearCit=0;
-        for(int i=0;i<yearCitation.length ;i++)
-        {
-            if (yearCitation[i]==null){
-                break;
-            }
-            totleYearCit+=yearCitation[i];
-        }
-        Number totleYearCits = new Number(14, rows, totleYearCit);
+        //左被引总数
+        Number totleYearCits = new Number(CellName.leftTotal.ordinal(), rows, total);
         ws.addCell(totleYearCits);
         wwb.write();
         wwb.close();
         rwb.close();
     }
 
+    /**
+     * amazon写入
+     *
+     * @param amazon
+     * @param searchResult
+     * @throws Exception
+     */
     public void writeAmazon(Double[] amazon, SearchResult searchResult) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("resources/amazon-result.xls"));
         WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/amazon-result.xls"), rwb);//copy
@@ -401,6 +245,13 @@ public class ExcelReader {
         rwb.close();
     }
 
+    /**
+     * 当当写入
+     *
+     * @param dangdang
+     * @param searchResult
+     * @throws Exception
+     */
     public void writeDangdang(Integer dangdang, SearchResult searchResult) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("resources/dangdang-result.xls"));
         WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/dangdang-result.xls"), rwb);//copy
@@ -427,9 +278,65 @@ public class ExcelReader {
         rwb.close();
     }
 
-    public void writeNlc(GTResult gtResult) throws Exception {
+    /**
+     * 豆瓣写入
+     *
+     * @param searchResult
+     * @param result
+     * @throws Exception
+     */
+    public void writeDouBan(SearchResult searchResult, Double[] result) throws Exception {
+        Workbook rwb = Workbook.getWorkbook(new File("resources/douban-result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/douban-result.xls"), rwb);//copy
+        WritableSheet ws = wwb.getSheet(0);
+        int rows = ws.getRows();
+        Label title = new Label(0, rows, searchResult.getTitle());
+        if (result[0] != null) {
+            Number num = new Number(5, rows, result[0].intValue());
+            Number num1 = new Number(6, rows, result[1]);
+            ws.addCell(title);
+            ws.addCell(num);
+            ws.addCell(num1);
+        } else {
+            Label num = new Label(5, rows, "--");
+            Label num1 = new Label(6, rows, "--");
+            ws.addCell(title);
+            ws.addCell(num);
+            ws.addCell(num1);
+        }
+        wwb.write();
+        wwb.close();
+        rwb.close();
+    }
+
+    public void writeCnkiDetail(String result, String title, String totalTitle) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
         WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        WritableSheet ws = wwb.getSheet(0);
+        int rows = ws.getRows();
+        if (result.contains(",") || result.contains("，")) {
+            result = result.replaceAll(",", "");
+            result = result.replaceAll("，", "");
+            result = result.replaceAll(" ", "");
+        }
+        Integer count = Integer.parseInt(result);
+        System.out.println("   行数：" + rows);
+        Number num = new Number(1, rows, count);
+        Label lab = new Label(0, rows, title);
+        if (totalTitle != null) {
+            Label lab1 = new Label(3, rows, totalTitle);
+            ws.addCell(lab1);
+        }
+        ws.addCell(lab);
+        ws.addCell(num);
+        wwb.write();
+        wwb.close();
+        rwb.close();
+    }
+
+    public void writeNlc(GTResult gtResult) throws Exception {
+        Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb);//copy
         WritableSheet ws = wwb.getSheet(0);
         int rows = ws.getRows();
         System.out.println("   行数：" + rows);
@@ -473,8 +380,8 @@ public class ExcelReader {
     }
 
     public void writeDangdangSpider(GTResult gtResult) throws Exception {
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb);//copy
         WritableSheet ws = wwb.getSheet(0);
         int rows = ws.getRows();
         System.out.println("   行数：" + rows);
@@ -507,34 +414,9 @@ public class ExcelReader {
         rwb.close();
     }
 
-    public void writeCnkiDetail(String result, String title, String totalTitle) throws Exception {
-        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
-        WritableSheet ws = wwb.getSheet(0);
-        int rows = ws.getRows();
-        if (result.contains(",") || result.contains("，")) {
-            result = result.replaceAll(",", "");
-            result = result.replaceAll("，", "");
-            result = result.replaceAll(" ", "");
-        }
-        Integer count = Integer.parseInt(result);
-        System.out.println("   行数：" + rows);
-        Number num = new Number(1, rows, count);
-        Label lab = new Label(0, rows, title);
-        if (totalTitle != null) {
-            Label lab1 = new Label(3, rows, totalTitle);
-            ws.addCell(lab1);
-        }
-        ws.addCell(lab);
-        ws.addCell(num);
-        wwb.write();
-        wwb.close();
-        rwb.close();
-    }
-
     public void convert(String result[]) throws Exception {
-        Workbook rwb1 = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb1);//copy
+        Workbook rwb1 = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb1);//copy
         WritableSheet sheet = wwb.getSheet(0);
         int rows = sheet.getRows();
         String info = "";
@@ -609,10 +491,6 @@ public class ExcelReader {
         return result;
     }
 
-
-    public void writeFirCiat(Integer s) {
-
-    }
 
     public Integer[] readFinal() throws IOException, BiffException {
         Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\最终结果.xls"));

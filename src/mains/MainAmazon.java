@@ -1,8 +1,7 @@
 package mains;
 
-import excel.ExcelReader;
+import excel.ExcelProcess;
 import pojo.SearchResult;
-import spider.DangdangSpider;
 
 /**
  * Created by Administrator on 2016/9/15.
@@ -10,8 +9,8 @@ import spider.DangdangSpider;
 public class MainAmazon {
     public static void main(String[] args) throws Exception {
         //亚马逊
-        ExcelReader reader = new ExcelReader();
-        SearchResult[] searchResults = reader.reader("resources/source-init-part.xls");
+        ExcelProcess reader = new ExcelProcess();
+        SearchResult[] searchResults = reader.reader("resources/source-init-part1.xls");
         Double[] amazon;
         for(int i=0;i<searchResults.length;i++) {
             spider.AmazonSpider amazonSpider = new spider.AmazonSpider();

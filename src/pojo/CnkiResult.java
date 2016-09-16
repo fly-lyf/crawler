@@ -1,21 +1,26 @@
 package pojo;
 
+import java.util.HashMap;
+import java.util.InputMismatchException;
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * Created by Administrator on 2015/9/4.
  */
 public class CnkiResult {
     private String count;
-    private String[] type;
+    private HashMap<String, Integer> type;
     private String[] url;
-    private Integer[] citation;
+    private HashMap<String, Integer> citation;
     private Integer selfCitation;
-    private Integer selfAddCitation;
+    private Integer selfInstituteCitation;
 
-    public Integer[] getCitation() {
+    public HashMap<String, Integer> getCitation() {
         return citation;
     }
 
-    public void setCitation(Integer[] citation) {
+    public void setCitation(HashMap<String, Integer> citation) {
         this.citation = citation;
     }
 
@@ -27,12 +32,12 @@ public class CnkiResult {
         this.selfCitation = selfCitation;
     }
 
-    public Integer getSelfAddCitation() {
-        return selfAddCitation;
+    public Integer getSelfInstituteCitation() {
+        return selfInstituteCitation;
     }
 
-    public void setSelfAddCitation(Integer selfAddCitation) {
-        this.selfAddCitation = selfAddCitation;
+    public void setSelfInstituteCitation(Integer selfInstituteCitation) {
+        this.selfInstituteCitation = selfInstituteCitation;
     }
 
     public String getCount() {
@@ -43,11 +48,11 @@ public class CnkiResult {
         this.count = count;
     }
 
-    public String[] getType() {
+    public HashMap<String, Integer> getType() {
         return type;
     }
 
-    public void setType(String[] type) {
+    public void setType(HashMap<String, Integer> type) {
         this.type = type;
     }
 
@@ -61,7 +66,15 @@ public class CnkiResult {
 
     @Override
     public String toString() {
-        String str = "总结果数="+this.getCount()+"\n自引数量="+this.getSelfCitation()+"\n机构自引数量="+this.getSelfAddCitation()+"\n";
+        String str = "总结果数="+this.getCount()+"\n自引数量="+this.getSelfCitation()+"\n机构自引数量="+this.getSelfInstituteCitation()+"\n";
+        for (Iterator<Map.Entry<String, Integer>> iterator = this.type.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, Integer> entry = iterator.next();
+            str += entry.getKey()+":"+entry.getValue()+"\n";
+        }
+        for (Iterator<Map.Entry<String, Integer>> iterator = this.citation.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, Integer> entry = iterator.next();
+            str += entry.getKey()+":"+entry.getValue()+"\n";
+        }
         return str;
     }
 }

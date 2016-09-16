@@ -343,9 +343,9 @@ public class DoubanSpider {
         DoubanSpider douban = new DoubanSpider();
         SearchResult searchResult = new SearchResult();
 
-        searchResult.setTitle("苏联共产党基层党组织建设研究");
-        searchResult.setAuthor("李燕");
-        searchResult.setPublisher("社会科学文献出版社");
+        searchResult.setTitle("财务会计概念之法学研究");
+        searchResult.setAuthor("黄申");
+        searchResult.setPublisher("中国人民大学出版社");
         searchResult.setPubTime(2015);
         searchResult.setSpareAuthor("青史");
         searchResult.setSpareTitle("");

@@ -1,6 +1,6 @@
 package mains;
 
-import excel.ExcelReader;
+import excel.ExcelProcess;
 import spider.DoubanSpider;
 
 /**
@@ -9,8 +9,8 @@ import spider.DoubanSpider;
 public class MainDouban {
     public static void main(String[] args) throws Exception {
         //豆瓣
-        ExcelReader reader = new ExcelReader();
-        pojo.SearchResult[] searchResults = reader.reader("resources/source-init.xls");
+        ExcelProcess reader = new ExcelProcess();
+        pojo.SearchResult[] searchResults = reader.reader("resources/source-init-part.xls");
         Double[] results = null;
         for (int i = 0; i < searchResults.length; i++) {
             DoubanSpider douban = new DoubanSpider();

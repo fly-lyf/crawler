@@ -1,9 +1,8 @@
 package mains;
 
-import excel.ExcelReader;
+import excel.ExcelProcess;
 import pojo.SearchResult;
 import spider.DangdangSpider;
-import spider.DoubanSpider;
 
 /**
  * Created by Administrator on 2016/9/15.
@@ -11,7 +10,7 @@ import spider.DoubanSpider;
 public class MainDangdang {
     public static void main(String[] args) throws Exception {
         //当当
-        ExcelReader reader = new ExcelReader();
+        ExcelProcess reader = new ExcelProcess();
         DangdangSpider dangdangSpider = new DangdangSpider();
         SearchResult[] searchResults = reader.reader("resources/source-init.xls");
         Integer dangdang;
