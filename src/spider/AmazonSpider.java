@@ -106,8 +106,8 @@ public class AmazonSpider {
                         return result;
                     } else {
                         System.out.println("没有评价信息");
-                        result[0] = null;
-                        result[1] = null;
+                        result[0] = 0.0;
+                        result[1] = 0.0;
                         return result;
                     }
                 } else {
@@ -178,7 +178,7 @@ public class AmazonSpider {
     //单元测试
     public static void main(String[] args) throws IOException, InterruptedException {
         AmazonSpider amazonSpider = new AmazonSpider();
-        SearchResult searchResult = new SearchResult("\"生态人\":环境法上的人之形象", "吴贤静", "", 2011, "");
+        SearchResult searchResult = new SearchResult("中国云南少数民族音乐考源", "谢自律", "", 2011, "");
         System.out.println(amazonSpider.requestAmazon(searchResult));
 
     }

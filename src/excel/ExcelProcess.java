@@ -165,8 +165,7 @@ public class ExcelProcess {
 
         //结果数
         if (cnkiResult.getCount() != null) {
-            Integer count = Integer.parseInt(cnkiResult.getCount());
-            WritableCell wc = ws.getWritableCell(rows, 4);
+            Integer count = cnkiResult.getCount();
             Number num = new Number(CellName.crawledTotal.ordinal(), rows, count);
             ws.addCell(num);
         }
@@ -203,6 +202,9 @@ public class ExcelProcess {
             Integer year = Integer.parseInt(it.getKey());
             Integer count = it.getValue();
             total += count;
+            if(CellName.cit2016.ordinal() + 2016 - year >= CellName.cit2007.ordinal()){
+                continue;
+            }
             Number yearCit = new Number(CellName.cit2016.ordinal() + 2016 - year, rows, count);
             ws.addCell(yearCit);
         }

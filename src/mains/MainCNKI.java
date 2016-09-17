@@ -5,6 +5,8 @@ import pojo.CnkiResult;
 import pojo.SearchResult;
 import spider.CnkiSpider;
 
+import java.util.HashMap;
+
 /**
  * Created by Administrator on 2016/9/16.
  */
@@ -21,9 +23,19 @@ public class MainCNKI {
             CnkiResult cnkiResult = new CnkiResult();
             cnkiResult.setCount(cnki.getTotalNum(url));
             Thread.sleep(500);
+
             cnkiResult.setCitation(cnki.getCitations(searchResults[i]));
             Thread.sleep(500);
-            cnkiResult.setType(cnki.getTypes(searchResults[i]));
+
+            Integer totalCount = cnkiResult.getCount();
+            HashMap cits = cnkiResult.getCitation();
+            //获取论文类型并输出清理掉辑刊
+            HashMap<String, Integer>[] typesAndCits = cnki.getTypes(searchResults[i],cits, totalCount);
+            cnkiResult.setType(typesAndCits[0]);
+            //清理分年引用辑刊、总结果数辑刊
+            cnkiResult.setCitation(typesAndCits[1]);
+            cnkiResult.setCount(typesAndCits[2].get("count"));
+
             Thread.sleep(500);
             cnkiResult.setSelfCitation(cnki.getAuthorSelfCitaion(searchResults[i]));
             Thread.sleep(500);
