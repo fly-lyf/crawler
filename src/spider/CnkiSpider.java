@@ -30,13 +30,8 @@ public class CnkiSpider {
 
     private Util util = new Util();
 
-    /**
-     * @param param 查询条件对象
-     * @return
-     * @throws IOException
-     */
-    //主查询
-    public String searchKeyword(SearchResult param) throws IOException {
+    //传入关键字
+    public String searchKeyword(SearchResult param, boolean totalTitle) throws IOException {
         //标题 名字 出版社 时间
         String key1 = param.getTitle();
         String key2 = param.getAuthor();
@@ -77,9 +72,9 @@ public class CnkiSpider {
 
             }
 
-//            if (key1 != "" && key2 != "" && key3 != "" && key4 != "") {
-//                url = url + "&txt_4_sel=RF&txt_4_value1=" + URLEncoder.encode(key4, "utf-8") + "&txt_4_logical=and&txt_4_relation=%23CNKI_AND&txt_4_special1=%3D&his=0&__=Mon%20Aug%2031%202015%2010%3A52%3A39%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
-//            }
+            if (!Objects.equals(key1, "") && !Objects.equals(key2, "") && !Objects.equals(key3, "") && !Objects.equals(key4, "")) {
+                url = url + "&txt_4_sel=RF&txt_4_value1=" + URLEncoder.encode(key4, "utf-8") + "&txt_4_logical=and&txt_4_relation=%23CNKI_AND&txt_4_special1=%3D&his=0&__=Mon%20Aug%2031%202015%2010%3A52%3A39%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
+            }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -173,7 +168,7 @@ public class CnkiSpider {
             } else if (sourceName.contains("辑刊")) {
                 //辑刊只有一个数据库，所以这个分支只进入一次
                 Integer sourceCount = Integer.parseInt(sourceCountStr.substring(1, sourceCountStr.indexOf(")")));
-                Thread.sleep(2000);
+                Thread.sleep(1000);
                 String[] formatted = util.formatSearchResult(searchResult);
                 String key1 = formatted[0];
                 String queryID = "";
@@ -200,7 +195,7 @@ public class CnkiSpider {
                 }
                 //第二页开始
                 for (int i = 2; i <= count / 50 + 1; i++) {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                     innerUrl = "http://epub.cnki.net/kns/brief/brief.aspx?curpage=" + i + "&RecordsPerPage=50&QueryID=" + queryID + "&ID=&turnpage=1&tpagemode=L&dbPrefix=SCDB&Fields=&DisplayMode=listmode&PageName=ASP.brief_result_aspx#J_ORDER";
                     innerRes = getEntity(innerUrl);
                     innerDoc = Jsoup.parse(innerRes);
@@ -290,7 +285,7 @@ public class CnkiSpider {
     public String getNewPaperComment(String key) throws IOException {
         String url = "http://epub.cnki.net/KNS/request/SearchHandler.ashx?action=&NaviCode=*&ua=1.21&PageName=ASP.brief_result_aspx&DbPrefix=SCDB&DbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&db_opt=CJFQ%2CCJFN%2CCDFD%2CCMFD%2CCPFD%2CIPFD%2CCCND%2CCCJD%2CHBRD&base_special1=%25&magazine_value1=%E5%85%89%E6%98%8E%E6%97%A5%E6%8A%A5%2B%E6%96%B0%E5%8D%8E%E6%AF%8F%E6%97%A5%E7%94%B5%E8%AE%AF%2B%E6%96%87%E6%B1%87%E6%8A%A5%2B%E4%B8%AD%E5%9B%BD%E7%A4%BE%E4%BC%9A%E7%A7%91%E5%AD%A6%E6%8A%A5&magazine_special1=%3D&txt_1_sel=SU&txt_1_value1=" + URLEncoder.encode(key, "utf-8") + "&txt_1_relation=%23CNKI_AND&txt_1_special1=%3D&his=0&__=Tue%20Sep%2015%202015%2020%3A59%3A58%20GMT%2B0800%20(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)";
         getEntity(url);
-        url = "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue=\" + URLEncoder.encode(key, \"utf-8\") + \"&S=1";
+        url = "http://epub.cnki.net/kns/brief/brief.aspx?pagename=ASP.brief_result_aspx&dbPrefix=SCDB&dbCatalog=%e4%b8%ad%e5%9b%bd%e5%ad%a6%e6%9c%af%e6%96%87%e7%8c%ae%e7%bd%91%e7%bb%9c%e5%87%ba%e7%89%88%e6%80%bb%e5%ba%93&ConfigFile=SCDB.xml&research=off&t=1442322612064&keyValue=" + URLEncoder.encode(key, "utf-8") + "&S=1";
         String resText = getEntity(url);
         Document doc = Jsoup.parse(resText);
         Elements pagerTitleCell = doc.select("div[class=pagerTitleCell]");
@@ -356,7 +351,7 @@ public class CnkiSpider {
     public static void main(String[] args) throws IOException, InterruptedException {
         CnkiSpider cnki = new CnkiSpider();
         SearchResult searchResult = new SearchResult("哈代诗歌研究", "颜学军", "人民文学出版社", 0, "东北师范大学");
-        String url = cnki.searchKeyword(searchResult);
+        String url = cnki.searchKeyword(searchResult, false);
 
         CnkiResult cnkiResult = new CnkiResult();
         cnkiResult.setCount(cnki.getTotalNum(url));

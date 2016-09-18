@@ -93,7 +93,7 @@ public class Util {
         return title;
     }
 
-    //自动生成一部分备用书名
+    //自动生成部分备用书名
     public String createSpareTile(String title, String spareTitle){
         if(spareTitle != null && !spareTitle.equals("")){
             return spareTitle;

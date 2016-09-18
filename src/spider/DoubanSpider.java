@@ -28,6 +28,7 @@ public class DoubanSpider {
     String cookieStr;
     Util util = new Util();
 
+    //主查询
     public Double[] requestDouban(SearchResult searchResult) throws IOException {
         Double[] returns = new Double[2];
         Double persons = 0.0;

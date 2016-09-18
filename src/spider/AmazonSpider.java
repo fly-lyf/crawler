@@ -27,6 +27,7 @@ public class AmazonSpider {
     private SearchResult innerSearch;
     private Util util = new Util();
 
+    //主查询
     public Double[] requestAmazon(SearchResult searchResult) throws IOException, InterruptedException {
         innerSearch = searchResult;
         Double[] result = new Double[2];
@@ -121,6 +122,7 @@ public class AmazonSpider {
         return result;
     }
 
+    //获取http响应
     public String getEntity(String url) throws IOException, InterruptedException {
         cookieStr = "x-wl-uid=13s6CQwa7CHtIWW1zoT6waLh4ASpP1hAV2mBoiP6jLroCnBMSl/isUm9JfmOcZ1SaIBFxpW776Vg=; session-token=\"VDOfgl36uB/iR1SkbIHZbN+Iz1QDH4+EwBQFeDk+IcTLb5ozSjpLTS5DV6VC+9ZDV4A5MmZJF07Qt7gH57if5Ifwtr0NdL/EPpOUGzUvPy2k1AR0+grhK3QPErDL2xrG0Q49FU1V+QZ8T13Jui7LOLxtBugQyBiGdc9SGm+bVNIoY59RlWeBCxnsR6RHtDJHv1d0o7QHQlgvFv85U5qyXw==\"; ubid-acbcn=452-0670493-8094523; session-id-time=2082729601l; session-id=456-1692712-1972507; csm-hit=B22D700A9XR07N0RB36N+s-B22D700A9XR07N0RB36N|1473950318203";
         CnkiResult cnkiResult = new CnkiResult();

@@ -126,6 +126,7 @@ public class DangdangSpider {
         return result;
     }
 
+    //获取http响应
     public String getEntity(String url) throws IOException {
         CnkiResult cnkiResult = new CnkiResult();
         cookieStr = "__permanent_id=20150907220016537412413853055524459; __ddclick_visit=0000000001.1; out_refer=%7C; ddscreen=2; __trace_id=20150907221429847385123453431947745; __xsptplus100=100.1.1441634422.1441635269.11%234%7C%7C%7C%7C%7C%23%23lpvsf3w78GoYK7B34SayKvKAO4Ko3vDc%23; _jzqco=%7C%7C%7C%7C%7C1.1715151580.1441634422123.1441635202934.1441635269999.1441635202934.1441635269999.0.0.0.11.11; pos_9_end=1441635270056; ad_ids=1777500%2C1765433%2C1765387%7C%236%2C11%2C9; pos_0_start=1441635270176; pos_0_end=1441635270184";
@@ -147,7 +148,8 @@ public class DangdangSpider {
         return resText;
     }
 
-    public GTResult getTable(String url) throws Exception {
+    //当当获取图书信息
+    public GTResult getBookInfo(String url) throws Exception {
         GTResult gtResult = new GTResult();
         String resText = getEntity(url);
 //        System.out.println(resText);
@@ -210,6 +212,7 @@ public class DangdangSpider {
         return gtResult;
     }
 
+    //单元测试
     public static void main(String[] args) throws Exception {
         DangdangSpider dangdangSpider = new spider.DangdangSpider();
         SearchResult searchResult = new SearchResult("文学文本解读学", "孙绍振", "北京大学出版社", 0, "");

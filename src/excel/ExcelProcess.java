@@ -11,6 +11,7 @@ import pojo.GTResult;
 import pojo.SearchResult;
 
 import java.io.*;
+import java.util.DoubleSummaryStatistics;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,7 +21,7 @@ import java.util.Map;
  */
 public class ExcelProcess {
 
-    public enum CellName{
+    public enum CellName {
         title(0),
         author(1),
         publisher(2),
@@ -43,15 +44,17 @@ public class ExcelProcess {
         doctor(19),
         conference(20),
         authorSelf(21),
-        instituteSelf(22);
+        instituteSelf(22),
+        年均引用(37),
+        首次被引时间(39),
+        峰值间隔(41);
 
-        private int code;
+        private int value;
 
-        CellName(int i) {
-            this.code = i;
+        CellName(int value) {
+            this.value = value;
         }
     }
-
 
     /**
      * 通用读取方法
@@ -91,14 +94,6 @@ public class ExcelProcess {
                 pubYearNum = pubYearNum.substring(0, 4);
             }
 
-//            Cell recYear = sheet.getCell(9, i);
-//            String recYearNum = recYear.getContents();
-//            if (recYearNum.contains("月") || recYearNum.contains("无") || recYearNum.contains(".")) {
-//                recYearNum = recYearNum.substring(recYearNum.indexOf("20"), recYearNum.indexOf("20") + 4);
-//            }
-//            if (recYearNum.contains("40") || recYearNum.contains("41") || recYearNum.contains("42") || recYearNum.contains("39")) {
-//                recYearNum = "" + (Integer.parseInt(recYearNum) / 365 + 1900);
-//            }
             searchResults[i] = new SearchResult();
             searchResults[i].setTitle(title.getContents());
             searchResults[i].setAuthor(author.getContents());
@@ -143,13 +138,13 @@ public class ExcelProcess {
         //写参数
         for (int i = 0; i < 3; i++) {
             String content = "";
-            if (i == CellName.title.ordinal()) {
+            if (i == CellName.title.value) {
                 content = searchParam.getTitle();
             }
-            if (i == CellName.author.ordinal()) {
+            if (i == CellName.author.value) {
                 content = searchParam.getAuthor();
             }
-            if (i == CellName.publisher.ordinal()) {
+            if (i == CellName.publisher.value) {
                 content = searchParam.getPublisher();
             }
             Label label = new Label(i, rows, content);
@@ -159,14 +154,14 @@ public class ExcelProcess {
         //出版年
         if (searchParam.getPubTime() != null) {
             Integer content = searchParam.getPubTime();
-            Number number = new Number(CellName.pubTime.ordinal(), rows, content);
+            Number number = new Number(CellName.pubTime.value, rows, content);
             ws.addCell(number);
         }
 
         //结果数
         if (cnkiResult.getCount() != null) {
             Integer count = cnkiResult.getCount();
-            Number num = new Number(CellName.crawledTotal.ordinal(), rows, count);
+            Number num = new Number(CellName.crawledTotal.value, rows, count);
             ws.addCell(num);
         }
 
@@ -175,22 +170,22 @@ public class ExcelProcess {
         Integer dct = cnkiResult.getType().get("doctor");
         Integer mag = cnkiResult.getType().get("magazine");
         Integer conf = cnkiResult.getType().get("conference");
-        Number num4 = new Number(CellName.magazine.ordinal(), rows, mag);
-        Number num2 = new Number(CellName.master.ordinal(), rows, mst);
-        Number num1 = new Number(CellName.doctor.ordinal(), rows, dct);
-        Number num3 = new Number(CellName.conference.ordinal(), rows, conf);
+        Number num4 = new Number(CellName.magazine.value, rows, mag);
+        Number num2 = new Number(CellName.master.value, rows, mst);
+        Number num1 = new Number(CellName.doctor.value, rows, dct);
+        Number num3 = new Number(CellName.conference.value, rows, conf);
         ws.addCell(num1);
         ws.addCell(num2);
         ws.addCell(num3);
         ws.addCell(num4);
         //右被引总数
-        Number rightTotal = new Number(CellName.rightTotal.ordinal(), rows, mag+dct+mst+conf);
+        Number rightTotal = new Number(CellName.rightTotal.value, rows, mag + dct + mst + conf);
         ws.addCell(rightTotal);
         //自引数
         Integer selfCitation = cnkiResult.getSelfCitation();
         Integer selfInstituteCitation = cnkiResult.getSelfInstituteCitation();
-        Number citation1 = new Number(CellName.authorSelf.ordinal(), rows, selfCitation);
-        Number citation2 = new Number(CellName.instituteSelf.ordinal(), rows, selfInstituteCitation);
+        Number citation1 = new Number(CellName.authorSelf.value, rows, selfCitation);
+        Number citation2 = new Number(CellName.instituteSelf.value, rows, selfInstituteCitation);
         ws.addCell(citation1);
         ws.addCell(citation2);
 
@@ -202,14 +197,14 @@ public class ExcelProcess {
             Integer year = Integer.parseInt(it.getKey());
             Integer count = it.getValue();
             total += count;
-            if(CellName.cit2016.ordinal() + 2016 - year >= CellName.cit2007.ordinal()){
+            if (CellName.cit2016.value + 2016 - year >= CellName.cit2007.value) {
                 continue;
             }
-            Number yearCit = new Number(CellName.cit2016.ordinal() + 2016 - year, rows, count);
+            Number yearCit = new Number(CellName.cit2016.value + 2016 - year, rows, count);
             ws.addCell(yearCit);
         }
         //左被引总数
-        Number totleYearCits = new Number(CellName.leftTotal.ordinal(), rows, total);
+        Number totleYearCits = new Number(CellName.leftTotal.value, rows, total);
         ws.addCell(totleYearCits);
         wwb.write();
         wwb.close();
@@ -311,31 +306,35 @@ public class ExcelProcess {
         rwb.close();
     }
 
-    public void writeCnkiDetail(String result, String title, String totalTitle) throws Exception {
+    /**
+     * cnki学术评论、报纸评论写入
+     *
+     * @param result
+     * @throws Exception
+     */
+    public void writeCnkiComment(String result, Integer col, int row) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        WritableWorkbook wwb = this.writeSheet("resources/result.xls");
         WritableSheet ws = wwb.getSheet(0);
-        int rows = ws.getRows();
         if (result.contains(",") || result.contains("，")) {
             result = result.replaceAll(",", "");
             result = result.replaceAll("，", "");
             result = result.replaceAll(" ", "");
         }
         Integer count = Integer.parseInt(result);
-        System.out.println("   行数：" + rows);
-        Number num = new Number(1, rows, count);
-        Label lab = new Label(0, rows, title);
-        if (totalTitle != null) {
-            Label lab1 = new Label(3, rows, totalTitle);
-            ws.addCell(lab1);
-        }
-        ws.addCell(lab);
+        Number num = new Number(col, row, count);
         ws.addCell(num);
         wwb.write();
         wwb.close();
         rwb.close();
     }
 
+    /**
+     * 国图图书信息写入
+     *
+     * @param gtResult
+     * @throws Exception
+     */
     public void writeNlc(GTResult gtResult) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
         WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb);//copy
@@ -381,7 +380,13 @@ public class ExcelProcess {
         rwb.close();
     }
 
-    public void writeDangdangSpider(GTResult gtResult) throws Exception {
+    /**
+     * 当当图书信息写入
+     *
+     * @param gtResult
+     * @throws Exception
+     */
+    public void writeDangdangBookInfo(GTResult gtResult) throws Exception {
         Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
         WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb);//copy
         WritableSheet ws = wwb.getSheet(0);
@@ -416,106 +421,245 @@ public class ExcelProcess {
         rwb.close();
     }
 
-    public void convert(String result[]) throws Exception {
-        Workbook rwb1 = Workbook.getWorkbook(new File("F:\\资料\\result.xls"));
-        WritableWorkbook wwb = Workbook.createWorkbook(new File("F:\\资料\\result.xls"), rwb1);//copy
-        WritableSheet sheet = wwb.getSheet(0);
-        int rows = sheet.getRows();
-        String info = "";
-        Number num = new Number(0, rows, Integer.parseInt(result[0]));
-        sheet.addCell(num);
-        Label lab = new Label(1, rows, result[1]);
-        sheet.addCell(lab);
-        Number lixiangW = new Number(2, rows, Integer.parseInt(result[2]));
-        sheet.addCell(lixiangW);
-        if (result[3].contains("--")) {
-            Label lab4 = new Label(3, rows, result[3]);
-            sheet.addCell(lab4);
-        } else {
-            Number lab4 = new Number(3, rows, Integer.parseInt(result[3]));
-            sheet.addCell(lab4);
+    /**
+     * 写入立项时间数据，这个代码基本是不能用的
+     *
+     * @throws Exception
+     */
+    public void addLiXiang() throws Exception {
+        //读
+        InputStream instream = new FileInputStream("resources/2015年书目.xls");
+        Workbook readwb = Workbook.getWorkbook(instream);
+        Sheet sheet = readwb.getSheet(1);
+        Integer[] results = new Integer[(sheet.getRows() - 2)];
+        String[] title = new String[(sheet.getRows() - 2)];
+        String[] author = new String[(sheet.getRows() - 2)];
+        for (int i = 2; i < sheet.getRows(); i++) {
+            Cell liXiang = sheet.getCell(1, i);
+            author[i - 2] = sheet.getCell(5, i).getContents();
+            title[i - 2] = sheet.getCell(3, i).getContents();
+            String time = liXiang.getContents();
+            if (time.length() >= 3) {
+                time = time.substring(0, 2);
+                time = "20" + time;
+                Integer number = Integer.parseInt(time);
+                results[i - 2] = number;
+                System.out.println(results[i - 2]);
+            }
+        }
+
+        //写
+        Workbook rwb = Workbook.getWorkbook(new File("resources/result.xls"));
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        WritableSheet ws = wwb.getSheet(0);
+        Sheet resultSheet = rwb.getSheet(0);
+        HashMap<String, String> resultAuthor = new HashMap<>();
+        System.out.println(resultSheet.getRows());
+        for (int i = 1; i < resultSheet.getRows(); i++) {
+            String result16 = resultSheet.getCell(0, i).getContents();
+            if (resultAuthor.get(result16) != null) {
+                System.out.println(result16);
+                System.out.println(resultAuthor.get(result16));
+                System.out.println(i);
+            }
+            resultAuthor.put(result16, resultSheet.getCell(1, i).getContents());
+        }
+        int rows = 2;
+        for (int i = 1; i <= results.length; i++) {
+            for (Iterator<Map.Entry<String, String>> iterator = resultAuthor.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<String, String> it = iterator.next();
+                if (author[i - 1].contains(it.getValue()) && title[i - 1].contains(it.getKey())) {
+                    Number num = new Number(23, rows, results[i - 1]);
+                    ws.addCell(num);
+                    break;
+                } else if (author[i - 1].contains(it.getValue())) {
+                    System.out.println(title[i - 1] + " " + author[i - 1] + " " + results[i - 1]);
+                }
+            }
+            rows++;
         }
         wwb.write();
         wwb.close();
-        rwb1.close();
-    }
-
-    public String[][] readConvert() throws IOException, BiffException {
-
-        Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\图书信息.xls"));
-        Sheet sheet = rwb.getSheet(0);
-        int rows = sheet.getRows();
-        String[][] result = new String[rows][4];
-        String info = "";
-        for (int i = 1; i < sheet.getRows(); i++) {
-            Cell author = sheet.getCell(7, i);
-            Cell title = sheet.getCell(1, i);
-            Cell place = sheet.getCell(9, i);
-            Cell publisher = sheet.getCell(5, i);
-            Cell time = sheet.getCell(6, i);
-            String timeFormat = time.getContents();
-            String authorFormat = author.getContents();
-            Cell otherAuthor = sheet.getCell(10, i);
-            Cell lixiang = sheet.getCell(15, i);
-            String otherAuthorFormat = otherAuthor.getContents();
-            result[i][0] = "" + i;
-
-            if (timeFormat.contains("-") || timeFormat.contains("/")) {
-                if (timeFormat.length() > 4) {
-                    timeFormat = timeFormat.substring(0, 2);
-                    timeFormat = "20" + timeFormat;
-                }
-            }
-            if (authorFormat.contains("等")) {
-                authorFormat = authorFormat.replaceAll("等", "");
-                otherAuthorFormat = otherAuthorFormat.replaceAll("：", "");
-                System.out.println(i + authorFormat + "," + otherAuthorFormat + "," + title.getContents() + "," + place.getContents() + ":" + publisher.getContents() + "," + timeFormat);
-                info = authorFormat + "," + otherAuthorFormat + "," + title.getContents() + "," + place.getContents() + ":" + publisher.getContents() + "," + timeFormat;
-                result[i][1] = info;
-
-            } else {
-                System.out.println(i + authorFormat + "," + title.getContents() + "," + place.getContents() + ":" + publisher.getContents() + "," + timeFormat);
-                info = authorFormat + "," + title.getContents() + "," + place.getContents() + ":" + publisher.getContents() + "," + timeFormat;
-                result[i][1] = info;
-            }
-            System.out.println(lixiang.getContents());
-            result[i][2] = lixiang.getContents();
-            if (timeFormat.contains("--")) {
-                System.out.println("--");
-                result[i][3] = "--";
-            } else {
-                System.out.println(Integer.parseInt(timeFormat) - Integer.parseInt(lixiang.getContents()));
-                Number zhouqi = new Number(3, rows, Integer.parseInt(timeFormat) - Integer.parseInt(lixiang.getContents()));
-                result[i][3] = "" + (Integer.parseInt(timeFormat) - Integer.parseInt(lixiang.getContents()));
-            }
-
-        }
-        return result;
+        rwb.close();
     }
 
 
-    public Integer[] readFinal() throws IOException, BiffException {
-        Workbook rwb = Workbook.getWorkbook(new File("F:\\资料\\最终结果.xls"));
-        Sheet sheet = rwb.getSheet(0);
-        int rows = sheet.getRows();
-        Integer[] result = new Integer[rows - 1];
+    public void 计算年均引用(String path) throws IOException, BiffException, WriteException {
+        Sheet sheet = this.readSheet(path, 0);
+        Integer rows = sheet.getRows();
+        Double[] results = new Double[rows - 1];
         for (int i = 1; i < rows; i++) {
-            for (int j = 12; j >= 4; j--) {
-                Cell cell = sheet.getCell(j, i);
-                if (cell.getContents() != "" && cell.getContents() != null) {
-                    Cell year = sheet.getCell(j, 0);
-                    Cell pub = sheet.getCell(3, i);
-                    result[i - 1] = Integer.parseInt(year.getContents().substring(0, 4)) - Integer.parseInt(pub.getContents());
-                    System.out.println(result[i - 1]);
+            Integer duration = null;
+            Integer year = 2007;
+            Double total = 0.0;
+            Cell[] cells = new Cell[CellName.cit2007.value - CellName.cit2015.value + 1];
+            for (int j = CellName.cit2007.value; j > CellName.cit2015.value; j--) {
+                cells[j - CellName.cit2015.value] = sheet.getCell(j, i);
+                String cellStr = cells[j - CellName.cit2015.value].getContents();
+                if (!cellStr.equals("") && duration == null) {
+                    System.out.println(year);
+                    duration = 2015 - year;
+
+                } else if (!cellStr.equals("")) {
+                    total += Integer.parseInt(cellStr);
+                }
+                year++;
+            }
+            if (duration == null) {
+                results[i - 1] = null;
+            } else {
+                results[i - 1] = total / duration;
+            }
+            System.out.println(results[i - 1]);
+        }
+
+        WritableWorkbook wwb = this.writeSheet(path);
+        WritableSheet ws = wwb.getSheet(0);
+        for (int i = 1; i < ws.getRows(); i++) {
+            if (results[i - 1] != null) {
+                Number cell = new Number(CellName.年均引用.value, i, results[i - 1]);
+                ws.addCell(cell);
+            } else {
+                Label cell = new Label(CellName.年均引用.value, i, "null");
+                ws.addCell(cell);
+            }
+        }
+        this.closeSheet(wwb);
+    }
+
+    public void 计算首次被引时间(String path) throws IOException, WriteException, BiffException {
+        Sheet sheet = this.readSheet(path, 0);
+        Integer rows = sheet.getRows();
+        Integer[] results = new Integer[rows - 1];
+        for (int i = 1; i < rows; i++) {
+            Integer firstCitYear = null;
+            Integer year = 2007;
+            Cell[] cells = new Cell[CellName.cit2007.value - CellName.cit2015.value + 1];
+            for (int j = CellName.cit2007.value; j >= CellName.cit2015.value; j--) {
+                cells[j - CellName.cit2015.value] = sheet.getCell(j, i);
+                String cellStr = cells[j - CellName.cit2015.value].getContents();
+                if (!cellStr.equals("")) {
+                    firstCitYear = year;
                     break;
                 }
-                if (j == 4) {
-                    result[i - 1] = 99999;
-                    System.out.println(result[i - 1]);
-                }
+                year++;
             }
 
+            if (firstCitYear == null || firstCitYear == 2016) {
+                results[i - 1] = null;
+            } else {
+                results[i - 1] = year;
+            }
+            System.out.println(results[i - 1]);
         }
-        return result;
+
+        WritableWorkbook wwb = this.writeSheet(path);
+        WritableSheet ws = wwb.getSheet(0);
+        for (int i = 1; i < ws.getRows(); i++) {
+            if (results[i - 1] != null) {
+                Number cell = new Number(CellName.首次被引时间.value, i, results[i - 1]);
+                ws.addCell(cell);
+            } else {
+                Label cell = new Label(CellName.首次被引时间.value, i, "null");
+                ws.addCell(cell);
+            }
+        }
+        this.closeSheet(wwb);
+    }
+
+    public void 计算峰值间隔(String path) throws IOException, BiffException, WriteException {
+        Sheet sheet = this.readSheet(path, 0);
+        Integer rows = sheet.getRows();
+        Integer[] results = new Integer[rows - 1];
+        for (int i = 1; i < rows; i++) {
+            Integer max = 0;
+            Integer maxYear = null;
+            Integer year = 2015;
+            Cell[] cells = new Cell[CellName.cit2007.value - CellName.cit2015.value + 1];
+            for (int j = CellName.cit2015.value; j <= CellName.cit2007.value; j++) {
+                cells[j - CellName.cit2015.value] = sheet.getCell(j, i);
+                String cellStr = cells[j - CellName.cit2015.value].getContents();
+                Integer cellVal;
+                if (cellStr.equals("")) {
+                    cellVal = 0;
+                } else {
+                    cellVal = Integer.parseInt(cellStr);
+                }
+                if (cellVal >= max) {
+                    max = cellVal;
+                    maxYear = year;
+                }
+                year--;
+            }
+            if (max == 0) {
+                maxYear = null;
+            }
+
+            if (maxYear == null) {
+                results[i - 1] = null;
+            } else {
+                results[i - 1] = 2015 - maxYear;
+            }
+            System.out.println(results[i - 1]);
+        }
+
+        WritableWorkbook wwb = this.writeSheet(path);
+        WritableSheet ws = wwb.getSheet(0);
+        for (int i = 1; i < ws.getRows(); i++) {
+            if (results[i - 1] != null) {
+                Number cell = new Number(CellName.峰值间隔.value, i, results[i - 1]);
+                ws.addCell(cell);
+            } else {
+                Label cell = new Label(CellName.峰值间隔.value, i, "null");
+                ws.addCell(cell);
+            }
+        }
+        this.closeSheet(wwb);
+    }
+
+    /**
+     * 通用读表
+     *
+     * @param path
+     * @return
+     */
+    public Sheet readSheet(String path, int sheetNum) throws IOException, BiffException {
+        InputStream instream = new FileInputStream(path);
+        Workbook readwb = Workbook.getWorkbook(instream);
+        Sheet sheet = readwb.getSheet(sheetNum);
+        return sheet;
+    }
+
+    /**
+     * 通用写表
+     *
+     * @param path
+     * @return
+     */
+    public WritableWorkbook writeSheet(String path) throws IOException, BiffException, WriteException {
+        InputStream instream = new FileInputStream(path);
+        Workbook rwb = Workbook.getWorkbook(instream);
+        WritableWorkbook wwb = Workbook.createWorkbook(new File("resources/result.xls"), rwb);//copy
+        return wwb;
+
+    }
+
+    /**
+     * 通用关闭表格
+     *
+     * @param wwb
+     * @throws IOException
+     * @throws WriteException
+     */
+    public void closeSheet(WritableWorkbook wwb) throws IOException, WriteException {
+        wwb.write();
+        wwb.close();
+    }
+
+    public static void main(String[] args) throws WriteException, IOException, BiffException {
+        ExcelProcess process = new ExcelProcess();
+//        process.计算峰值间隔("reso/urces/result.xls");
+        process.计算首次被引时间("resources/result.xls");
+//        process.计算年均引用("resources/result.xls");
     }
 }
