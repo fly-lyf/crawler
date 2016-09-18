@@ -40,9 +40,9 @@ public class NlcSpider {
         String author = "";
         String pub = "";
         String titleBak = "";
-        String param = "http://find.nlc.gov.cn/search/showDocDetails?docId=";
+        String param = "http://find.nlc.cn/search/showDocDetails?docId=";
         System.out.println("_______________________");
-        String url = "http://find.nlc.gov.cn/search/doSearch?query=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") + "&secQuery=&actualQuery=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") + "mediatype%3A(0%20OR%201%20OR%202)%20&searchType=2&docType=%E5%9B%BE%E4%B9%A6&mediaTypes=0,1,2&isGroup=isGroup&targetFieldLog=%E5%85%A8%E9%83%A8%E5%AD%97%E6%AE%B5&orderBy=RELATIVE";
+        String url = "http://find.nlc.cn/search/doSearch?query=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") + "&secQuery=&actualQuery=" + URLEncoder.encode(searchResult.getTitle(), "utf-8") + "mediatype%3A(0%20OR%201%20OR%202)%20&searchType=2&docType=%E5%9B%BE%E4%B9%A6&mediaTypes=0,1,2&isGroup=isGroup&targetFieldLog=%E5%85%A8%E9%83%A8%E5%AD%97%E6%AE%B5&orderBy=RELATIVE";
         String resText = getEntity(url);
 //        System.out.println(resText);
         Pattern patternTitle = Pattern.compile("<a id=\"([^\\<]*[istitle=\"true\"]+[^\\<]*?)<([span/a]*)([^\\<]*)");

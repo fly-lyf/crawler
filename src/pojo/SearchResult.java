@@ -12,6 +12,32 @@ public class SearchResult {
     private Integer[] yearResult;
     private Integer[] countResult;
     private String address;
+    private String spareTitle;
+    private String spareAuthor;
+
+    public SearchResult(){
+        super();
+    }
+
+    public SearchResult(String title, String author, String publisher, Integer pubTime, String address){
+        super();
+        setPubTime(pubTime);
+        setAuthor(author);
+        setTitle(title);
+        setPublisher(publisher);
+        setAddress(address);
+    }
+
+    public SearchResult(String title, String author, String publisher, Integer pubTime, String address, String spareTitle, String spareAuthor){
+        super();
+        setPubTime(pubTime);
+        setAuthor(author);
+        setTitle(title);
+        setPublisher(publisher);
+        setAddress(address);
+        setSpareTitle(spareTitle);
+        setSpareAuthor(spareAuthor);
+    }
 
     public String getAddress() {
         return address;
@@ -77,4 +103,19 @@ public class SearchResult {
         this.countResult = countResult;
     }
 
+    public String getSpareTitle() {
+        return spareTitle;
+    }
+
+    public void setSpareTitle(String spareTitle) {
+        this.spareTitle = spareTitle;
+    }
+
+    public String getSpareAuthor() {
+        return spareAuthor;
+    }
+
+    public void setSpareAuthor(String spareAuthor) {
+        this.spareAuthor = spareAuthor;
+    }
 }
